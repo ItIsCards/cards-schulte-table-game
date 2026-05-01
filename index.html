@@ -191,7 +191,7 @@
 
   .board-wrap { display: flex; justify-content: center; margin-bottom: 24px; width: 100%; position: relative; }
   #board { display: grid; gap: 6px; padding: 6px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; width: 100%; margin: 0 auto; }
-  .cell { display: flex; justify-content: center; align-items: center; background: var(--bg-cell); color: var(--text); font-size: clamp(18px, 4vw, 24px); font-weight: 600; cursor: pointer; user-select: none; border-radius: 4px; transition: background 0.08s, transform 0.06s, color 0.08s, box-shadow 0.1s; border: 1px solid transparent; aspect-ratio: 1; }
+  .cell { display: flex; justify-content: center; align-items: center; background: var(--bg-cell); color: var(--text); font-size: clamp(16px, 3.5vw, 24px); font-weight: 600; cursor: pointer; user-select: none; border-radius: 4px; transition: background 0.08s, transform 0.06s, color 0.08s, box-shadow 0.1s; border: 1px solid transparent; aspect-ratio: 1; }
   .cell:hover { background: var(--bg-cell-hover); }
   .cell:active { transform: scale(0.94); }
   .cell.center-mark { background: var(--bg-cell-center); border-color: var(--border-strong); }
@@ -405,7 +405,7 @@
 </head>
 <body data-theme="dark">
 
-<!-- Aero Bubbles (Pure CSS for guaranteed rendering) -->
+<!-- Aero Bubbles -->
 <div id="bubbles-container">
     <div class="bubble" style="left: 10%; animation-duration: 8s; animation-delay: 0s; width: 40px; height: 40px;"></div>
     <div class="bubble" style="left: 25%; animation-duration: 12s; animation-delay: 2s; width: 60px; height: 60px;"></div>
@@ -420,9 +420,7 @@
 <div class="container">
 
   <!-- Interactive Toybox Sidebar -->
-  <div class="toybox" id="toyboxContainer">
-      <!-- Generated via JS -->
-  </div>
+  <div class="toybox" id="toyboxContainer"></div>
 
   <header class="header">
     <div class="header-left">
@@ -481,6 +479,7 @@
           <option value="reverse">Reverse (N to 1)</option>
           <option value="alphanumeric">Alphanumeric (1, A, 2, B...)</option>
           <option value="timed">Timed Challenge</option>
+          <option value="scrambled">Scrambled (Shuffles)</option>
         </select>
       </div>
       <div class="control-group">
@@ -491,6 +490,7 @@
           <option value="5" selected>5 x 5</option>
           <option value="6">6 x 6</option>
           <option value="7">7 x 7</option>
+          <option value="8">8 x 8</option>
         </select>
       </div>
       <div class="control-group" id="timedLimitGroup" style="display:none">
@@ -557,7 +557,6 @@
     <div class="play-container">
       <div class="play-stage">
         
-        <!-- WRAPPED ACTION BAR & BOARD TOGETHER FOR UNIFIED SCALING -->
         <div id="focusTransformContainer">
             <div class="focus-actions-row focus-only-btn">
               <button id="focusZoomOutBtn" class="focus-icon-btn" title="Zoom Out Board">
@@ -621,6 +620,7 @@
           <option value="reverse">Reverse</option>
           <option value="alphanumeric">Alphanumeric</option>
           <option value="timed">Timed</option>
+          <option value="scrambled">Scrambled</option>
         </select>
       </div>
       <div class="control-group">
@@ -632,6 +632,7 @@
           <option value="5">5 x 5</option>
           <option value="6">6 x 6</option>
           <option value="7">7 x 7</option>
+          <option value="8">8 x 8</option>
         </select>
       </div>
       <div class="control-group">
@@ -745,9 +746,7 @@
         <div class="benefits-title" style="margin-top:24px">Wardrobe & Effects</div>
         <div class="benefits-sub">Click an unlocked item to equip or unequip it. Only one item per category can be active. Pick its colour next to it.</div>
         
-        <div id="unlocksCategories">
-            <!-- Dynamically populated categories -->
-        </div>
+        <div id="unlocksCategories"></div>
 
       </div>
     </div>
@@ -757,9 +756,7 @@
   <section class="view" id="view-rewards">
       <div class="benefits-title" style="margin-top:0">Progression Path</div>
       <div class="benefits-sub">Every level requires exactly 100 XP. Push harder boards for massive XP multipliers.</div>
-      <div class="rewards-list" id="rewardsList">
-          <!-- Populated by JS -->
-      </div>
+      <div class="rewards-list" id="rewardsList"></div>
   </section>
 
   <section class="view" id="view-learn">
@@ -836,13 +833,10 @@
       <div class="stat"><div class="stat-label">Board Diff</div><div class="stat-value" id="smDiff" style="font-size:18px"></div></div>
     </div>
     
-    <div id="smInsights">
-        <!-- Dynamic insights populate here -->
-    </div>
+    <div id="smInsights"></div>
 
     <h4 style="font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:8px;">Top 5 Longest Pauses</h4>
-    <ul id="smPauses" style="list-style:none; padding:0; margin:0 0 20px 0; font-size:13px; color:var(--text-dim);">
-    </ul>
+    <ul id="smPauses" style="list-style:none; padding:0; margin:0 0 20px 0; font-size:13px; color:var(--text-dim);"></ul>
     
     <div class="modal-actions">
       <button class="secondary" id="sessionModalClose">Close</button>
@@ -879,23 +873,16 @@
 /* ============================ UNLOCKS & TOYS ============================ */
 
 const UNLOCKS = [
-  // APPRENTICE tier
   { level: 2,  key: 'glasses',    name: 'Reading Glasses', desc: 'Vision sharpened',           category: 'face',     defaultColour: '#1f2937' },
   { level: 5,  key: 'cardigan',   name: 'Cardigan',        desc: 'Comfort in study',           category: 'clothing', defaultColour: '#78350f' },
   { level: 8,  key: 'tie',        name: 'Necktie',         desc: 'Business mind',              category: 'clothing', defaultColour: '#1e40af' },
-  
-  // SCHOLAR tier
   { level: 12, key: 'jacket',     name: 'Tweed Jacket',    desc: 'The look of a thinker',      category: 'clothing', defaultColour: '#44403c' },
   { level: 18, key: 'scarf',      name: 'Scholar Scarf',   desc: 'Distinguished air',          category: 'clothing', defaultColour: '#7c3aed' },
   { level: 25, key: 'monocle',    name: 'Monocle',         desc: 'A scholar emerges',          category: 'face',     defaultColour: '#fbbf24' },
   { level: 30, key: 'labcoat',    name: 'Lab Coat',        desc: 'Researcher status',          category: 'clothing', defaultColour: '#fafaf9' },
-
-  // PRESTIGE tier
   { level: 40, key: 'tophat',     name: 'Top Hat',         desc: 'Distinguished gentleman',    category: 'headwear', defaultColour: '#1e3a8a' },
   { level: 50, key: 'sparkle_dust',name: 'Sparkle Dust',   desc: 'A magical aura surrounds you',category: 'effect',   defaultColour: '#0ea5e9' },
   { level: 60, key: 'cosmic_eyes',name: 'Cosmic Eyes',     desc: 'Sight beyond sight',         category: 'face',     defaultColour: '#38bdf8' },
-
-  // MYTHIC tier
   { level: 70, key: 'orbiting_moons',name:'Orbiting Moons',desc: 'Gravitational mastery',      category: 'effect',   defaultColour: '#cbd5e1' },
   { level: 75, key: 'halo',       name: 'Glowing Halo',    desc: 'Enlightened',                category: 'headwear', defaultColour: '#fbbf24' },
   { level: 80, key: 'matrix_rain',name: 'Data Stream',     desc: 'Seeing the code directly',   category: 'effect',   defaultColour: '#22c55e' },
@@ -915,16 +902,10 @@ const TOYS = [
 ];
 
 const MAX_LEVEL = 100;
-
 const TIER_NAMES = [
-  { min: 1,  name: 'Novice' },
-  { min: 5,  name: 'Apprentice' },
-  { min: 15, name: 'Adept' },
-  { min: 30, name: 'Scholar' },
-  { min: 50, name: 'Expert' },
-  { min: 70, name: 'Master' },
-  { min: 85, name: 'Grandmaster' },
-  { min: 100, name: 'Ascended' },
+  { min: 1,  name: 'Novice' }, { min: 5,  name: 'Apprentice' }, { min: 15, name: 'Adept' },
+  { min: 30, name: 'Scholar' }, { min: 50, name: 'Expert' }, { min: 70, name: 'Master' },
+  { min: 85, name: 'Grandmaster' }, { min: 100, name: 'Ascended' }
 ];
 
 function getTierName(level) {
@@ -936,7 +917,6 @@ function getTierName(level) {
 /* ============================ NEW PORTRAIT SVG ENGINE ============================ */
 function buildCharacterSvg(level, gender) {
   const isF = gender === 'F';
-  
   const colourOf = (key) => {
     const baseColours = state.baseColours || {};
     if (baseColours[key]) return baseColours[key];
@@ -944,290 +924,143 @@ function buildCharacterSvg(level, gender) {
     if (!u) return '#888';
     return (state.itemColours && state.itemColours[key]) ? state.itemColours[key] : u.defaultColour;
   };
-
   const isEquipped = (cat, key) => state.equipped && state.equipped[cat] === key;
 
   const baseColours = state.baseColours || {};
   const skin = baseColours.skinColour || '#d4a574';
   const hairCol = baseColours.hairColour || '#3d2817';
   const baseShirt = baseColours.baseShirt || '#e6eaf2';
-  
-  const baseStyles = state.baseStyles || {};
-  const hStyle = parseInt(baseStyles.hair || 0);
+  const hStyle = parseInt((state.baseStyles || {}).hair || 0);
 
   let svg = `<g transform="translate(0, 10)">`;
 
-  // 1. AURA LAYER
   if (isEquipped('aura', 'ascension')) {
-      svg += `
-        <defs>
-          <radialGradient id="ascGrad">
-            <stop offset="0%" stop-color="${colourOf('ascension')}" stop-opacity="0.8"/>
-            <stop offset="60%" stop-color="${colourOf('ascension')}" stop-opacity="0.2"/>
-            <stop offset="100%" stop-color="${colourOf('ascension')}" stop-opacity="0"/>
-          </radialGradient>
-        </defs>
-        <circle cx="50" cy="40" r="45" fill="url(#ascGrad)">
-            <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite"/>
-        </circle>
-        <path d="M 0 100 L 50 20 L 100 100 Z" fill="${colourOf('ascension')}" opacity="0.15" />
-      `;
+      svg += `<defs><radialGradient id="ascGrad"><stop offset="0%" stop-color="${colourOf('ascension')}" stop-opacity="0.8"/><stop offset="60%" stop-color="${colourOf('ascension')}" stop-opacity="0.2"/><stop offset="100%" stop-color="${colourOf('ascension')}" stop-opacity="0"/></radialGradient></defs><circle cx="50" cy="40" r="45" fill="url(#ascGrad)"><animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite"/></circle><path d="M 0 100 L 50 20 L 100 100 Z" fill="${colourOf('ascension')}" opacity="0.15" />`;
   } else if (isEquipped('aura', 'wings')) {
-      svg += `
-        <path d="M 50 40 Q 15 20 10 60 Q 30 50 50 60 Z" fill="${colourOf('wings')}" opacity="0.9" stroke="var(--char-stroke)" stroke-width="0.8"/>
-        <path d="M 50 40 Q 85 20 90 60 Q 70 50 50 60 Z" fill="${colourOf('wings')}" opacity="0.9" stroke="var(--char-stroke)" stroke-width="0.8"/>
-      `;
+      svg += `<path d="M 50 40 Q 15 20 10 60 Q 30 50 50 60 Z" fill="${colourOf('wings')}" opacity="0.9" stroke="var(--char-stroke)" stroke-width="0.8"/><path d="M 50 40 Q 85 20 90 60 Q 70 50 50 60 Z" fill="${colourOf('wings')}" opacity="0.9" stroke="var(--char-stroke)" stroke-width="0.8"/>`;
   }
 
-  // 2. BACK HAIR
   if (isF) {
-      if (hStyle === 1) { // Long Flowing
-          svg += `<path d="M 30 30 Q 20 50 25 80 L 75 80 Q 80 50 70 30 Z" fill="${hairCol}"/>`;
-      } else if (hStyle === 2) { // Ponytail back
-          svg += `<path d="M 50 30 C 80 20, 75 60, 60 70 C 55 60, 50 40, 50 30 Z" fill="${hairCol}"/>`;
-      } else if (hStyle === 3) { // Braids back
-          svg += `<path d="M 30 30 L 25 70 L 35 70 Z" fill="${hairCol}"/><path d="M 70 30 L 65 70 L 75 70 Z" fill="${hairCol}"/>`;
-      } else if (hStyle === 4) { // Messy Bun back
-          svg += `<circle cx="50" cy="10" r="12" fill="${hairCol}"/>`;
-      }
+      if (hStyle === 1) svg += `<path d="M 30 30 Q 20 50 25 80 L 75 80 Q 80 50 70 30 Z" fill="${hairCol}"/>`;
+      else if (hStyle === 2) svg += `<path d="M 50 30 C 80 20, 75 60, 60 70 C 55 60, 50 40, 50 30 Z" fill="${hairCol}"/>`;
+      else if (hStyle === 3) svg += `<path d="M 30 30 L 25 70 L 35 70 Z" fill="${hairCol}"/><path d="M 70 30 L 65 70 L 75 70 Z" fill="${hairCol}"/>`;
+      else if (hStyle === 4) svg += `<circle cx="50" cy="10" r="12" fill="${hairCol}"/>`;
   }
 
-  // 3. BODY
-  const shoulderPath = isF 
-      ? `M 35 60 Q 50 55 65 60 Q 75 70 75 100 L 25 100 Q 25 70 35 60 Z`
-      : `M 30 60 Q 50 55 70 60 Q 85 70 85 100 L 15 100 Q 15 70 30 60 Z`;
-      
-  svg += `<path d="${shoulderPath}" fill="${baseShirt}" stroke="var(--char-stroke)" stroke-width="1.5"/>`;
-  svg += `<rect x="44" y="50" width="12" height="15" fill="${skin}" stroke="var(--char-stroke)" stroke-width="1.5"/>`;
+  const shoulderPath = isF ? `M 35 60 Q 50 55 65 60 Q 75 70 75 100 L 25 100 Q 25 70 35 60 Z` : `M 30 60 Q 50 55 70 60 Q 85 70 85 100 L 15 100 Q 15 70 30 60 Z`;
+  svg += `<path d="${shoulderPath}" fill="${baseShirt}" stroke="var(--char-stroke)" stroke-width="1.5"/><rect x="44" y="50" width="12" height="15" fill="${skin}" stroke="var(--char-stroke)" stroke-width="1.5"/>`;
 
-  // CLOTHING LAYER
   if (isEquipped('clothing', 'labcoat')) {
-      svg += `
-        <path d="${shoulderPath}" fill="${colourOf('labcoat')}" stroke="var(--char-stroke)" stroke-width="1.5"/>
-        <path d="M 45 60 L 50 75 L 55 60" fill="none" stroke="var(--char-stroke)" stroke-width="1.5"/>
-        <line x1="50" y1="75" x2="50" y2="100" stroke="var(--char-stroke)" stroke-width="1.5"/>
-      `;
+      svg += `<path d="${shoulderPath}" fill="${colourOf('labcoat')}" stroke="var(--char-stroke)" stroke-width="1.5"/><path d="M 45 60 L 50 75 L 55 60" fill="none" stroke="var(--char-stroke)" stroke-width="1.5"/><line x1="50" y1="75" x2="50" y2="100" stroke="var(--char-stroke)" stroke-width="1.5"/>`;
   } else if (isEquipped('clothing', 'jacket')) {
-      svg += `
-        <path d="${shoulderPath}" fill="${colourOf('jacket')}" stroke="var(--char-stroke)" stroke-width="1.5"/>
-        <path d="M 40 60 L 50 85 L 60 60 Z" fill="${baseShirt}" stroke="var(--char-stroke)" stroke-width="1.5"/>
-      `;
+      svg += `<path d="${shoulderPath}" fill="${colourOf('jacket')}" stroke="var(--char-stroke)" stroke-width="1.5"/><path d="M 40 60 L 50 85 L 60 60 Z" fill="${baseShirt}" stroke="var(--char-stroke)" stroke-width="1.5"/>`;
   } else if (isEquipped('clothing', 'cardigan')) {
-      svg += `
-        <path d="${shoulderPath}" fill="${colourOf('cardigan')}" stroke="var(--char-stroke)" stroke-width="1.5"/>
-        <path d="M 46 60 L 50 90 L 54 60 Z" fill="${baseShirt}" stroke="var(--char-stroke)" stroke-width="1.5"/>
-        <circle cx="50" cy="70" r="1.5" fill="var(--char-stroke)"/>
-        <circle cx="50" cy="80" r="1.5" fill="var(--char-stroke)"/>
-      `;
+      svg += `<path d="${shoulderPath}" fill="${colourOf('cardigan')}" stroke="var(--char-stroke)" stroke-width="1.5"/><path d="M 46 60 L 50 90 L 54 60 Z" fill="${baseShirt}" stroke="var(--char-stroke)" stroke-width="1.5"/><circle cx="50" cy="70" r="1.5" fill="var(--char-stroke)"/><circle cx="50" cy="80" r="1.5" fill="var(--char-stroke)"/>`;
   } else if (isEquipped('clothing', 'scarf')) {
-      svg += `
-        <path d="M 35 55 L 65 55 Q 70 65 65 70 L 35 70 Q 30 65 35 55 Z" fill="${colourOf('scarf')}" stroke="var(--char-stroke)" stroke-width="1.5"/>
-        <path d="M 55 70 L 60 95 L 50 95 Z" fill="${colourOf('scarf')}" stroke="var(--char-stroke)" stroke-width="1"/>
-      `;
+      svg += `<path d="M 35 55 L 65 55 Q 70 65 65 70 L 35 70 Q 30 65 35 55 Z" fill="${colourOf('scarf')}" stroke="var(--char-stroke)" stroke-width="1.5"/><path d="M 55 70 L 60 95 L 50 95 Z" fill="${colourOf('scarf')}" stroke="var(--char-stroke)" stroke-width="1"/>`;
   } else if (isEquipped('clothing', 'tie')) {
       svg += `<path d="M 48 60 L 52 60 L 55 85 L 50 90 L 45 85 Z" fill="${colourOf('tie')}" stroke="var(--char-stroke)" stroke-width="1"/>`;
   }
 
-  // 4. HEAD & FACE
   svg += `<circle cx="50" cy="35" r="18" fill="${skin}" stroke="var(--char-stroke)" stroke-width="1.5"/>`;
 
   if (isEquipped('face', 'cosmic_eyes')) {
-      svg += `
-        <ellipse cx="43" cy="33" rx="3" ry="3" fill="${colourOf('cosmic_eyes')}">
-            <animate attributeName="ry" values="3;0.2;3;3;3" keyTimes="0;0.05;0.1;0.95;1" dur="4s" repeatCount="indefinite" />
-        </ellipse>
-        <ellipse cx="57" cy="33" rx="3" ry="3" fill="${colourOf('cosmic_eyes')}">
-            <animate attributeName="ry" values="3;0.2;3;3;3" keyTimes="0;0.05;0.1;0.95;1" dur="4s" repeatCount="indefinite" />
-        </ellipse>
-        <circle cx="43" cy="33" r="1" fill="#fff"><animate attributeName="opacity" values="0.4;1;0.4" dur="1s" repeatCount="indefinite" /></circle>
-        <circle cx="57" cy="33" r="1" fill="#fff"><animate attributeName="opacity" values="0.4;1;0.4" dur="1s" repeatCount="indefinite" /></circle>
-      `;
+      svg += `<ellipse cx="43" cy="33" rx="3" ry="3" fill="${colourOf('cosmic_eyes')}"><animate attributeName="ry" values="3;0.2;3;3;3" keyTimes="0;0.05;0.1;0.95;1" dur="4s" repeatCount="indefinite" /></ellipse><ellipse cx="57" cy="33" rx="3" ry="3" fill="${colourOf('cosmic_eyes')}"><animate attributeName="ry" values="3;0.2;3;3;3" keyTimes="0;0.05;0.1;0.95;1" dur="4s" repeatCount="indefinite" /></ellipse><circle cx="43" cy="33" r="1" fill="#fff"><animate attributeName="opacity" values="0.4;1;0.4" dur="1s" repeatCount="indefinite" /></circle><circle cx="57" cy="33" r="1" fill="#fff"><animate attributeName="opacity" values="0.4;1;0.4" dur="1s" repeatCount="indefinite" /></circle>`;
   } else {
-      svg += `
-        <ellipse cx="43" cy="33" rx="2" ry="2" fill="var(--char-stroke)">
-            <animate attributeName="ry" values="2;0.1;2;2;2" keyTimes="0;0.05;0.1;0.95;1" dur="4s" repeatCount="indefinite" />
-        </ellipse>
-        <ellipse cx="57" cy="33" rx="2" ry="2" fill="var(--char-stroke)">
-            <animate attributeName="ry" values="2;0.1;2;2;2" keyTimes="0;0.05;0.1;0.95;1" dur="4s" repeatCount="indefinite" />
-        </ellipse>
-      `;
+      svg += `<ellipse cx="43" cy="33" rx="2" ry="2" fill="var(--char-stroke)"><animate attributeName="ry" values="2;0.1;2;2;2" keyTimes="0;0.05;0.1;0.95;1" dur="4s" repeatCount="indefinite" /></ellipse><ellipse cx="57" cy="33" rx="2" ry="2" fill="var(--char-stroke)"><animate attributeName="ry" values="2;0.1;2;2;2" keyTimes="0;0.05;0.1;0.95;1" dur="4s" repeatCount="indefinite" /></ellipse>`;
   }
-  svg += `
-    <path stroke="var(--char-stroke)" stroke-width="1.5" fill="none" stroke-linecap="round">
-        <animate attributeName="d" values="M 45 42 Q 50 42 55 42; M 45 41 Q 50 46 55 41; M 45 41 Q 50 46 55 41; M 45 42 Q 50 42 55 42" keyTimes="0;0.1;0.9;1" dur="6s" repeatCount="indefinite"/>
-    </path>
-  `;
+  svg += `<path stroke="var(--char-stroke)" stroke-width="1.5" fill="none" stroke-linecap="round"><animate attributeName="d" values="M 45 42 Q 50 42 55 42; M 45 41 Q 50 46 55 41; M 45 41 Q 50 46 55 41; M 45 42 Q 50 42 55 42" keyTimes="0;0.1;0.9;1" dur="6s" repeatCount="indefinite"/></path>`;
 
   if (isEquipped('face', 'glasses')) {
-      svg += `
-        <circle cx="43" cy="33" r="4.5" fill="none" stroke="${colourOf('glasses')}" stroke-width="1.5"/>
-        <circle cx="57" cy="33" r="4.5" fill="none" stroke="${colourOf('glasses')}" stroke-width="1.5"/>
-        <line x1="47.5" y1="33" x2="52.5" y2="33" stroke="${colourOf('glasses')}" stroke-width="1.5"/>
-      `;
+      svg += `<circle cx="43" cy="33" r="4.5" fill="none" stroke="${colourOf('glasses')}" stroke-width="1.5"/><circle cx="57" cy="33" r="4.5" fill="none" stroke="${colourOf('glasses')}" stroke-width="1.5"/><line x1="47.5" y1="33" x2="52.5" y2="33" stroke="${colourOf('glasses')}" stroke-width="1.5"/>`;
   } else if (isEquipped('face', 'monocle')) {
-      svg += `
-        <circle cx="57" cy="33" r="5" fill="none" stroke="${colourOf('monocle')}" stroke-width="1.5"/>
-        <line x1="61" y1="36" x2="65" y2="45" stroke="${colourOf('monocle')}" stroke-width="1"/>
-      `;
+      svg += `<circle cx="57" cy="33" r="5" fill="none" stroke="${colourOf('monocle')}" stroke-width="1.5"/><line x1="61" y1="36" x2="65" y2="45" stroke="${colourOf('monocle')}" stroke-width="1"/>`;
   }
 
-  // 5. FRONT HAIR
   if (isF) {
-      if (hStyle === 0) { // Bob
-          svg += `<path d="M 30 35 Q 30 10 50 15 Q 70 10 70 35 L 68 50 L 50 15 L 32 50 Z" fill="${hairCol}"/>`;
-      } else if (hStyle === 1) { // Long Flowing (front part)
-          svg += `<path d="M 32 35 Q 32 12 50 15 Q 68 12 68 35 L 65 20 Q 50 25 35 20 Z" fill="${hairCol}"/>`;
-      } else if (hStyle === 2) { // Ponytail front
-          svg += `<path d="M 32 30 Q 32 15 50 15 Q 68 15 68 30 L 50 20 Z" fill="${hairCol}"/>`;
-      } else if (hStyle === 3) { // Braids front
-          svg += `<path d="M 32 35 Q 32 15 50 15 Q 68 15 68 35 L 50 25 Z" fill="${hairCol}"/>`;
-      } else if (hStyle === 4) { // Messy Bun front
-          svg += `<path d="M 32 30 Q 32 15 50 15 Q 68 15 68 30 L 50 25 Z" fill="${hairCol}"/>`;
-      }
+      if (hStyle === 0) svg += `<path d="M 30 35 Q 30 10 50 15 Q 70 10 70 35 L 68 50 L 50 15 L 32 50 Z" fill="${hairCol}"/>`;
+      else if (hStyle === 1) svg += `<path d="M 32 35 Q 32 12 50 15 Q 68 12 68 35 L 65 20 Q 50 25 35 20 Z" fill="${hairCol}"/>`;
+      else if (hStyle === 2) svg += `<path d="M 32 30 Q 32 15 50 15 Q 68 15 68 30 L 50 20 Z" fill="${hairCol}"/>`;
+      else if (hStyle === 3) svg += `<path d="M 32 35 Q 32 15 50 15 Q 68 15 68 35 L 50 25 Z" fill="${hairCol}"/>`;
+      else if (hStyle === 4) svg += `<path d="M 32 30 Q 32 15 50 15 Q 68 15 68 30 L 50 25 Z" fill="${hairCol}"/>`;
   } else {
-      if (hStyle === 0) { // Short
-          svg += `<path d="M 32 25 Q 32 15 50 15 Q 68 15 68 25 L 50 20 Z" fill="${hairCol}"/>`;
-      } else if (hStyle === 1) { // Spiky
-          svg += `<polygon points="32,25 30,10 40,18 45,5 55,16 65,8 68,25" fill="${hairCol}"/>`;
-      } else if (hStyle === 2) { // Swept
-          svg += `<path d="M 30 30 C 30 5, 65 5, 70 20 C 70 25, 50 10, 30 30 Z" fill="${hairCol}"/>`;
-      } else if (hStyle === 3) { // Curly
-          svg += `<path d="M 30 25 Q 35 5 50 10 Q 65 5 70 25 Q 50 15 30 25 Z" fill="${hairCol}"/>`;
-      } else if (hStyle === 4) { // Buzz
-          svg += `<path d="M 33 22 Q 50 15 67 22 L 50 20 Z" fill="${hairCol}"/>`;
-      }
+      if (hStyle === 0) svg += `<path d="M 32 25 Q 32 15 50 15 Q 68 15 68 25 L 50 20 Z" fill="${hairCol}"/>`;
+      else if (hStyle === 1) svg += `<polygon points="32,25 30,10 40,18 45,5 55,16 65,8 68,25" fill="${hairCol}"/>`;
+      else if (hStyle === 2) svg += `<path d="M 30 30 C 30 5, 65 5, 70 20 C 70 25, 50 10, 30 30 Z" fill="${hairCol}"/>`;
+      else if (hStyle === 3) svg += `<path d="M 30 25 Q 35 5 50 10 Q 65 5 70 25 Q 50 15 30 25 Z" fill="${hairCol}"/>`;
+      else if (hStyle === 4) svg += `<path d="M 33 22 Q 50 15 67 22 L 50 20 Z" fill="${hairCol}"/>`;
   }
 
-  // 6. HEADWEAR
   if (isEquipped('headwear', 'tophat')) {
-      svg += `
-        <rect x="30" y="14" width="40" height="3" fill="${colourOf('tophat')}" stroke="var(--char-stroke)" stroke-width="1"/>
-        <rect x="37" y="-5" width="26" height="20" fill="${colourOf('tophat')}" stroke="var(--char-stroke)" stroke-width="1"/>
-        <rect x="37" y="10" width="26" height="3" fill="#fbbf24"/>
-      `;
+      svg += `<rect x="30" y="14" width="40" height="3" fill="${colourOf('tophat')}" stroke="var(--char-stroke)" stroke-width="1"/><rect x="37" y="-5" width="26" height="20" fill="${colourOf('tophat')}" stroke="var(--char-stroke)" stroke-width="1"/><rect x="37" y="10" width="26" height="3" fill="#fbbf24"/>`;
   } else if (isEquipped('headwear', 'crown')) {
-      svg += `
-        <path d="M 32 15 L 35 2 L 42 10 L 50 0 L 58 10 L 65 2 L 68 15 Z" fill="${colourOf('crown')}" stroke="var(--char-stroke)" stroke-width="1"/>
-        <circle cx="42" cy="10" r="1.5" fill="#e11d48"/>
-        <circle cx="50" cy="5" r="2" fill="#38bdf8"/>
-        <circle cx="58" cy="10" r="1.5" fill="#e11d48"/>
-      `;
+      svg += `<path d="M 32 15 L 35 2 L 42 10 L 50 0 L 58 10 L 65 2 L 68 15 Z" fill="${colourOf('crown')}" stroke="var(--char-stroke)" stroke-width="1"/><circle cx="42" cy="10" r="1.5" fill="#e11d48"/><circle cx="50" cy="5" r="2" fill="#38bdf8"/><circle cx="58" cy="10" r="1.5" fill="#e11d48"/>`;
   } else if (isEquipped('headwear', 'halo')) {
-      svg += `
-        <ellipse cx="50" cy="-2" rx="16" ry="4" fill="none" stroke="${colourOf('halo')}" stroke-width="2" opacity="0.9">
-          <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite"/>
-        </ellipse>
-      `;
+      svg += `<ellipse cx="50" cy="-2" rx="16" ry="4" fill="none" stroke="${colourOf('halo')}" stroke-width="2" opacity="0.9"><animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite"/></ellipse>`;
   }
 
-  // 7. EFFECTS
   if (isEquipped('effect', 'orbiting_moons')) {
-      svg += `
-        <g>
-            <animateTransform attributeName="transform" type="rotate" from="0 50 40" to="360 50 40" dur="5s" repeatCount="indefinite"/>
-            <circle cx="15" cy="40" r="4" fill="${colourOf('orbiting_moons')}"/>
-            <circle cx="85" cy="40" r="2.5" fill="${colourOf('orbiting_moons')}"/>
-        </g>
-      `;
+      svg += `<g><animateTransform attributeName="transform" type="rotate" from="0 50 40" to="360 50 40" dur="5s" repeatCount="indefinite"/><circle cx="15" cy="40" r="4" fill="${colourOf('orbiting_moons')}"/><circle cx="85" cy="40" r="2.5" fill="${colourOf('orbiting_moons')}"/></g>`;
   }
   if (isEquipped('effect', 'matrix_rain')) {
-      svg += `
-        <g fill="${colourOf('matrix_rain')}" opacity="0.6" font-family="monospace" font-size="6">
-            <text x="15" y="0"><animate attributeName="y" values="-10;110" dur="2s" repeatCount="indefinite"/>1</text>
-            <text x="25" y="-20"><animate attributeName="y" values="-20;110" dur="2.5s" repeatCount="indefinite"/>0</text>
-            <text x="80" y="-10"><animate attributeName="y" values="-10;110" dur="1.8s" repeatCount="indefinite"/>1</text>
-            <text x="85" y="-30"><animate attributeName="y" values="-30;110" dur="2.2s" repeatCount="indefinite"/>0</text>
-        </g>
-      `;
+      svg += `<g fill="${colourOf('matrix_rain')}" opacity="0.6" font-family="monospace" font-size="6"><text x="15" y="0"><animate attributeName="y" values="-10;110" dur="2s" repeatCount="indefinite"/>1</text><text x="25" y="-20"><animate attributeName="y" values="-20;110" dur="2.5s" repeatCount="indefinite"/>0</text><text x="80" y="-10"><animate attributeName="y" values="-10;110" dur="1.8s" repeatCount="indefinite"/>1</text><text x="85" y="-30"><animate attributeName="y" values="-30;110" dur="2.2s" repeatCount="indefinite"/>0</text></g>`;
   }
   if (isEquipped('effect', 'equations')) {
-      svg += `
-        <text x="10" y="20" font-size="8" fill="${colourOf('equations')}" font-family="monospace">π</text>
-        <text x="80" y="25" font-size="7" fill="${colourOf('equations')}" font-family="monospace">∑</text>
-        <text x="15" y="80" font-size="6" fill="${colourOf('equations')}" font-family="monospace">∞</text>
-        <text x="75" y="75" font-size="6" fill="${colourOf('equations')}" font-family="monospace">√x</text>
-        <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite"/>
-      `;
+      svg += `<text x="10" y="20" font-size="8" fill="${colourOf('equations')}" font-family="monospace">π</text><text x="80" y="25" font-size="7" fill="${colourOf('equations')}" font-family="monospace">∑</text><text x="15" y="80" font-size="6" fill="${colourOf('equations')}" font-family="monospace">∞</text><text x="75" y="75" font-size="6" fill="${colourOf('equations')}" font-family="monospace">√x</text><animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite"/>`;
   }
   if (isEquipped('effect', 'sparkle_dust')) {
-      svg += `
-        <circle cx="20" cy="30" r="1.5" fill="${colourOf('sparkle_dust')}"><animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/></circle>
-        <circle cx="80" cy="50" r="2" fill="${colourOf('sparkle_dust')}"><animate attributeName="opacity" values="0;1;0" dur="2.1s" repeatCount="indefinite"/></circle>
-        <circle cx="30" cy="85" r="1" fill="${colourOf('sparkle_dust')}"><animate attributeName="opacity" values="0;1;0" dur="1.8s" repeatCount="indefinite"/></circle>
-        <circle cx="70" cy="15" r="1.5" fill="${colourOf('sparkle_dust')}"><animate attributeName="opacity" values="0;1;0" dur="2.4s" repeatCount="indefinite"/></circle>
-      `;
+      svg += `<circle cx="20" cy="30" r="1.5" fill="${colourOf('sparkle_dust')}"><animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/></circle><circle cx="80" cy="50" r="2" fill="${colourOf('sparkle_dust')}"><animate attributeName="opacity" values="0;1;0" dur="2.1s" repeatCount="indefinite"/></circle><circle cx="30" cy="85" r="1" fill="${colourOf('sparkle_dust')}"><animate attributeName="opacity" values="0;1;0" dur="1.8s" repeatCount="indefinite"/></circle><circle cx="70" cy="15" r="1.5" fill="${colourOf('sparkle_dust')}"><animate attributeName="opacity" values="0;1;0" dur="2.4s" repeatCount="indefinite"/></circle>`;
   }
-
-  svg += `</g>`;
-  return svg;
+  svg += `</g>`; return svg;
 }
 
 /* ============================ STATE & STORAGE ============================ */
-const STORAGE_KEY = 'schulte_state_v17';
-
+const STORAGE_KEY = 'schulte_state_v18';
 const state = {
   size: 5, mode: 'classic', timeLimit: 60,
   sequence: [], boardValues: [], currentIndex: 0, isPlaying: false, isGameOver: false, startTime: 0, errors: 0,
   timerInterval: null, countdownInterval: null, history: [], totalExp: 0, gender: 'M', theme: 'dark', zoom: 1,
-  baseColours: { skinColour: '#d4a574', hairColour: '#3d2817', baseShirt: '#e6eaf2' },
-  baseStyles: { hair: 0 },
-  equipped: { headwear: null, face: null, clothing: null, aura: null, effect: null },
-  itemColours: {}, focus: false, latencies: [], lastClickTime: 0, spatialDifficulty: 0, pendingSession: null,
-  unseenUnlocks: [], unseenToys: []
+  baseColours: { skinColour: '#d4a574', hairColour: '#3d2817', baseShirt: '#e6eaf2' }, baseStyles: { hair: 0 },
+  equipped: { headwear: null, face: null, clothing: null, aura: null, effect: null }, itemColours: {}, focus: false, latencies: [], lastClickTime: 0, spatialDifficulty: 0, pendingSession: null, unseenUnlocks: [], unseenToys: []
 };
 
 function loadState() {
   try {
     let raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      const legacy = localStorage.getItem('schulte_state_v16') || localStorage.getItem('schulte_state_v15');
-      if (legacy) raw = legacy;
-    }
+    if (!raw) raw = localStorage.getItem('schulte_state_v17') || localStorage.getItem('schulte_state_v16');
     if (raw) {
-      const parsed = JSON.parse(raw);
-      state.history     = parsed.history     || [];
-      state.totalExp    = parsed.totalExp    || 0;
-      state.gender      = parsed.gender      || 'M';
-      state.theme       = parsed.theme       || 'dark';
-      state.zoom        = parsed.zoom        || 1;
-      state.baseColours = parsed.baseColours || { skinColour: '#d4a574', hairColour: '#3d2817', baseShirt: '#e6eaf2' };
-      state.baseStyles  = parsed.baseStyles  || { hair: 0 };
-      state.itemColours = parsed.itemColours || {};
-      state.equipped    = parsed.equipped    || { headwear: null, face: null, clothing: null, aura: null, effect: null };
-      state.unseenUnlocks = parsed.unseenUnlocks || [];
-      state.unseenToys  = parsed.unseenToys || [];
+      const p = JSON.parse(raw);
+      state.history = p.history || []; state.totalExp = p.totalExp || 0; state.gender = p.gender || 'M';
+      state.theme = p.theme || 'dark'; state.zoom = p.zoom || 1; state.baseColours = p.baseColours || { skinColour: '#d4a574', hairColour: '#3d2817', baseShirt: '#e6eaf2' };
+      state.baseStyles = p.baseStyles || { hair: 0 }; state.itemColours = p.itemColours || {};
+      state.equipped = p.equipped || { headwear: null, face: null, clothing: null, aura: null, effect: null };
+      state.unseenUnlocks = p.unseenUnlocks || []; state.unseenToys = p.unseenToys || [];
       state.history.forEach(h => { if(h.legit === undefined) h.legit = true; });
     }
-  } catch (e) {
-    console.warn('Could not load saved state:', e);
-  }
+  } catch (e) {}
 }
 
 function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      history: state.history, totalExp: state.totalExp, gender: state.gender, theme: state.theme, zoom: state.zoom,
-      baseColours: state.baseColours, baseStyles: state.baseStyles, itemColours: state.itemColours,
-      equipped: state.equipped, unseenUnlocks: state.unseenUnlocks, unseenToys: state.unseenToys
+      history: state.history, totalExp: state.totalExp, gender: state.gender, theme: state.theme, zoom: state.zoom, baseColours: state.baseColours, baseStyles: state.baseStyles, itemColours: state.itemColours, equipped: state.equipped, unseenUnlocks: state.unseenUnlocks, unseenToys: state.unseenToys
     }));
-  } catch (e) {
-    console.warn('Save failed:', e);
-  }
+  } catch (e) {}
 }
 
 function levelFromExp(exp) {
   const level = Math.floor(exp / 100) + 1;
-  const currentInLevel = exp % 100;
-  return { level: Math.min(level, MAX_LEVEL), currentInLevel: level >= MAX_LEVEL ? 100 : currentInLevel, neededForNext: 100 };
+  return { level: Math.min(level, MAX_LEVEL), currentInLevel: level >= MAX_LEVEL ? 100 : exp % 100, neededForNext: 100 };
 }
 
-function getTierThresholds(size) {
-  const factor = Math.pow((size * size) / 25, 0.85);
+function getTierThresholds(size, mode) {
+  let factor = Math.pow((size * size) / 25, 0.85);
+  if (mode === 'scrambled') factor *= 2.5; 
   return { elite: 25 * factor, excellent: 32 * factor, average: 45 * factor };
 }
 
-function getTier(time, size) {
-  const t = getTierThresholds(size);
+function getTier(time, size, mode) {
+  const t = getTierThresholds(size, mode);
   if (time < t.elite) return 'elite';
   if (time < t.excellent) return 'excellent';
   if (time < t.average) return 'average';
@@ -1238,12 +1071,17 @@ const TIER_LABELS = { elite: 'Elite', excellent: 'Excellent', average: 'Average'
 const TIER_BASE_EXP = { elite: 80, excellent: 60, average: 40, beginner: 20 };
 
 function calculateExp(time, size, mode, isRecord, spatialDiff) {
-  const tier = getTier(time, size);
-  const base = TIER_BASE_EXP[tier];
+  const tier = getTier(time, size, mode);
+  let base = TIER_BASE_EXP[tier];
 
   let diffMultiplier = 3; 
   if (spatialDiff > 3.2) diffMultiplier = 8; 
   else if (spatialDiff < 2.5) diffMultiplier = 1; 
+
+  if (mode === 'scrambled') {
+      base *= 3;
+      diffMultiplier = size >= 8 ? 15 : size >= 7 ? 12 : size >= 6 ? 10 : 6;
+  }
 
   const mult = isRecord ? 2 : 1;
   const timeBonus = Math.max(0, 50 - Math.floor(time));
@@ -1256,14 +1094,11 @@ function calculateExp(time, size, mode, isRecord, spatialDiff) {
 function generateSequence(mode, size) {
   const total = size * size;
   switch (mode) {
-    case 'classic': return Array.from({ length: total }, (_, i) => i + 1);
+    case 'classic': case 'scrambled': case 'timed': return Array.from({ length: total }, (_, i) => i + 1);
     case 'reverse': return Array.from({ length: total }, (_, i) => total - i);
-    case 'timed':   return Array.from({ length: total }, (_, i) => i + 1);
     case 'alphanumeric': {
       const seq = [];
-      for (let i = 0; i < total; i++) {
-        seq.push(i % 2 === 0 ? Math.floor(i / 2) + 1 : String.fromCharCode(65 + Math.floor(i / 2)));
-      }
+      for (let i = 0; i < total; i++) seq.push(i % 2 === 0 ? Math.floor(i / 2) + 1 : String.fromCharCode(65 + Math.floor(i / 2)));
       return seq;
     }
   }
@@ -1314,7 +1149,6 @@ const els = {
   focusTransformContainer: document.getElementById('focusTransformContainer')
 };
 
-/* ============================ ZOOM / SCALE CONTROLS ============================ */
 function updateZoom(newZoom) {
     state.zoom = Math.max(0.5, Math.min(newZoom, 2.5));
     document.body.style.zoom = state.zoom;
@@ -1325,8 +1159,6 @@ function updateZoom(newZoom) {
 els.zoomInBtn.addEventListener('click', () => updateZoom(state.zoom + 0.1));
 els.zoomOutBtn.addEventListener('click', () => updateZoom(state.zoom - 0.1));
 
-/* ============================ TOYBOX INTERACTIVES ============================ */
-
 function toggleAeroTheme() {
     if (state.theme === 'aero') setTheme('dark');
     else setTheme('aero');
@@ -1335,101 +1167,49 @@ function toggleAeroTheme() {
 function spawnSmokeAndBubbles() {
     for(let i=0; i<8; i++) {
         const smoke = document.createElement('div');
-        smoke.style.position = 'fixed';
-        smoke.style.bottom = '-100px';
-        smoke.style.left = (Math.random() * 100) + 'vw';
-        smoke.style.width = (Math.random() * 200 + 150) + 'px';
-        smoke.style.height = smoke.style.width;
-        smoke.style.background = 'rgba(200, 200, 200, 0.08)';
-        smoke.style.borderRadius = '50%';
-        smoke.style.filter = 'blur(40px)';
-        smoke.style.pointerEvents = 'none';
-        smoke.style.zIndex = '9998';
+        smoke.style.position = 'fixed'; smoke.style.bottom = '-100px'; smoke.style.left = (Math.random() * 100) + 'vw';
+        smoke.style.width = (Math.random() * 200 + 150) + 'px'; smoke.style.height = smoke.style.width;
+        smoke.style.background = 'rgba(200, 200, 200, 0.08)'; smoke.style.borderRadius = '50%';
+        smoke.style.filter = 'blur(40px)'; smoke.style.pointerEvents = 'none'; smoke.style.zIndex = '9998';
         document.body.appendChild(smoke);
-
         const duration = Math.random() * 5000 + 5000;
-        smoke.animate([
-            { transform: 'translateY(0) scale(1)', opacity: 0 },
-            { opacity: 1, offset: 0.2 },
-            { opacity: 0, offset: 0.8 },
-            { transform: `translateY(-100vh) translateX(${Math.random() * 200 - 100}px) scale(2.5)`, opacity: 0 }
-        ], { duration: duration, easing: 'ease-out' });
-
+        smoke.animate([ { transform: 'translateY(0) scale(1)', opacity: 0 }, { opacity: 1, offset: 0.2 }, { opacity: 0, offset: 0.8 }, { transform: `translateY(-100vh) translateX(${Math.random() * 200 - 100}px) scale(2.5)`, opacity: 0 } ], { duration: duration, easing: 'ease-out' });
         setTimeout(() => smoke.remove(), duration);
     }
-
     for(let i=0; i<15; i++) {
-        const bubble = document.createElement('div');
-        const size = Math.random() * 30 + 10;
-        bubble.style.position = 'fixed';
-        bubble.style.width = size + 'px';
-        bubble.style.height = size + 'px';
-        bubble.style.borderRadius = '50%';
-        bubble.style.border = '1px solid rgba(255, 255, 255, 0.4)';
+        const bubble = document.createElement('div'); const size = Math.random() * 30 + 10;
+        bubble.style.position = 'fixed'; bubble.style.width = size + 'px'; bubble.style.height = size + 'px';
+        bubble.style.borderRadius = '50%'; bubble.style.border = '1px solid rgba(255, 255, 255, 0.4)';
         bubble.style.background = 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0.1))';
-        bubble.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
-        bubble.style.pointerEvents = 'none';
-        bubble.style.zIndex = '9999';
-        bubble.style.left = (Math.random() * window.innerWidth) + 'px';
-        bubble.style.top = (Math.random() * window.innerHeight) + 'px';
+        bubble.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)'; bubble.style.pointerEvents = 'none'; bubble.style.zIndex = '9999';
+        bubble.style.left = (Math.random() * window.innerWidth) + 'px'; bubble.style.top = (Math.random() * window.innerHeight) + 'px';
         document.body.appendChild(bubble);
-
-        let vx = (Math.random() - 0.5) * 8;
-        let vy = (Math.random() - 0.5) * 8;
-        let x = parseFloat(bubble.style.left);
-        let y = parseFloat(bubble.style.top);
-
-        const anim = setInterval(() => {
-            x += vx; y += vy;
-            if (x < 0 || x > window.innerWidth - size) vx *= -1;
-            if (y < 0 || y > window.innerHeight - size) vy *= -1;
-            bubble.style.left = x + 'px';
-            bubble.style.top = y + 'px';
-        }, 30);
-
-        setTimeout(() => {
-            clearInterval(anim);
-            bubble.style.transition = 'opacity 0.5s';
-            bubble.style.opacity = '0';
-            setTimeout(() => bubble.remove(), 500);
-        }, 6000);
+        let vx = (Math.random() - 0.5) * 8, vy = (Math.random() - 0.5) * 8, x = parseFloat(bubble.style.left), y = parseFloat(bubble.style.top);
+        const anim = setInterval(() => { x += vx; y += vy; if (x < 0 || x > window.innerWidth - size) vx *= -1; if (y < 0 || y > window.innerHeight - size) vy *= -1; bubble.style.left = x + 'px'; bubble.style.top = y + 'px'; }, 30);
+        setTimeout(() => { clearInterval(anim); bubble.style.transition = 'opacity 0.5s'; bubble.style.opacity = '0'; setTimeout(() => bubble.remove(), 500); }, 6000);
     }
 }
 
 function renderToybox(level) {
-    const container = document.getElementById('toyboxContainer');
-    if(!container) return;
-    
-    let html = '';
-    let hasAnyNew = false;
+    if(!document.getElementById('toyboxContainer')) return;
+    let html = ''; let hasAnyNew = false;
     TOYS.forEach(toy => {
         const unlocked = level >= toy.level;
         const isNew = state.unseenToys && state.unseenToys.includes(toy.id);
         if(isNew && unlocked) hasAnyNew = true;
-        html += `
-            <div class="toy-btn ${unlocked ? 'unlocked' : ''} ${isNew && unlocked ? 'shiny-new' : ''}" id="${toy.id}" onclick="handleToyClick('${toy.id}')">
-                ${toy.icon}
-                <div class="toy-tooltip">${unlocked ? toy.desc : `Unlocks at Level ${toy.level}`}</div>
-            </div>
-        `;
+        html += `<div class="toy-btn ${unlocked ? 'unlocked' : ''} ${isNew && unlocked ? 'shiny-new' : ''}" id="${toy.id}" onclick="handleToyClick('${toy.id}')">${toy.icon}<div class="toy-tooltip">${unlocked ? toy.desc : `Unlocks at Level ${toy.level}`}</div></div>`;
     });
-    
-    if (hasAnyNew) {
-        html += `<div class="toy-try-me">✨ Try Me!</div>`;
-    }
-    container.innerHTML = html;
+    if (hasAnyNew) html += `<div class="toy-try-me">✨ Try Me!</div>`;
+    document.getElementById('toyboxContainer').innerHTML = html;
 }
 
 function handleToyClick(toyId) {
     const toy = TOYS.find(t => t.id === toyId);
     if (!toy) return;
-    
     if (state.unseenToys && state.unseenToys.includes(toyId)) {
         state.unseenToys = state.unseenToys.filter(id => id !== toyId);
-        saveState();
-        renderToybox(levelFromExp(state.totalExp).level);
+        saveState(); renderToybox(levelFromExp(state.totalExp).level);
     }
-    
     if (toy.action) toy.action();
 }
 
@@ -1439,220 +1219,90 @@ function spawnBouncingOrb() {
     orb.style.borderRadius = '50%'; orb.style.background = 'radial-gradient(circle at 30% 30%, #fff, var(--tier-elite))';
     orb.style.boxShadow = '0 0 20px var(--tier-elite)'; orb.style.zIndex = '9999';
     document.body.appendChild(orb);
-
     let x = Math.random() * (window.innerWidth - 30), y = Math.random() * (window.innerHeight - 30);
     let vx = (Math.random() > 0.5 ? 1 : -1) * (4 + Math.random() * 4), vy = (Math.random() > 0.5 ? 1 : -1) * (4 + Math.random() * 4);
     let life = 400;
-
-    function animate() {
-        x += vx; y += vy;
-        if (x <= 0 || x >= window.innerWidth - 30) vx *= -1;
-        if (y <= 0 || y >= window.innerHeight - 30) vy *= -1;
-        orb.style.left = x + 'px'; orb.style.top = y + 'px';
-        life--;
-        if (life > 0) requestAnimationFrame(animate);
-        else { orb.style.transition = 'opacity 1s'; orb.style.opacity = '0'; setTimeout(() => orb.remove(), 1000); }
-    }
+    function animate() { x += vx; y += vy; if (x <= 0 || x >= window.innerWidth - 30) vx *= -1; if (y <= 0 || y >= window.innerHeight - 30) vy *= -1; orb.style.left = x + 'px'; orb.style.top = y + 'px'; life--; if (life > 0) requestAnimationFrame(animate); else { orb.style.transition = 'opacity 1s'; orb.style.opacity = '0'; setTimeout(() => orb.remove(), 1000); } }
     animate();
 }
 
 function toggleCharacterDance() {
-    els.characterFrame.classList.add('dancing');
-    setTimeout(() => { els.characterFrame.classList.remove('dancing'); }, 3000);
+    els.characterFrame.classList.add('dancing'); setTimeout(() => els.characterFrame.classList.remove('dancing'), 3000);
 }
 
 function triggerExplosion() {
-    document.body.classList.add('shaking');
-    setTimeout(() => { document.body.classList.remove('shaking'); }, 800);
-    
+    document.body.classList.add('shaking'); setTimeout(() => document.body.classList.remove('shaking'), 800);
     const colors = ['#e11d48', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'];
     for(let i=0; i<60; i++) {
-        const p = document.createElement('div');
-        p.style.position = 'fixed'; p.style.top = '50%'; p.style.left = '50%';
-        p.style.width = (Math.random() * 10 + 5) + 'px'; p.style.height = p.style.width;
-        p.style.background = colors[Math.floor(Math.random() * colors.length)];
-        p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-        p.style.zIndex = '10000'; p.style.pointerEvents = 'none';
-        document.body.appendChild(p);
-        
-        const angle = Math.random() * Math.PI * 2;
-        const velocity = 10 + Math.random() * 30;
-        let vx = Math.cos(angle) * velocity;
-        let vy = Math.sin(angle) * velocity;
-        let op = 1;
-        
-        function anim() {
-            if(op <= 0) { p.remove(); return; }
-            let currentLeft = parseFloat(p.style.left) || (window.innerWidth / 2);
-            let currentTop = parseFloat(p.style.top) || (window.innerHeight / 2);
-            p.style.left = `${currentLeft + vx}px`;
-            p.style.top = `${currentTop + vy}px`;
-            vy += 0.5; // gravity
-            op -= 0.02;
-            p.style.opacity = op;
-            requestAnimationFrame(anim);
-        }
+        const p = document.createElement('div'); p.style.position = 'fixed'; p.style.top = '50%'; p.style.left = '50%'; p.style.width = (Math.random() * 10 + 5) + 'px'; p.style.height = p.style.width; p.style.background = colors[Math.floor(Math.random() * colors.length)]; p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px'; p.style.zIndex = '10000'; p.style.pointerEvents = 'none'; document.body.appendChild(p);
+        const angle = Math.random() * Math.PI * 2, velocity = 10 + Math.random() * 30;
+        let vx = Math.cos(angle) * velocity, vy = Math.sin(angle) * velocity, op = 1;
+        function anim() { if(op <= 0) { p.remove(); return; } p.style.left = `${parseFloat(p.style.left) || window.innerWidth/2 + vx}px`; p.style.top = `${parseFloat(p.style.top) || window.innerHeight/2 + vy}px`; vy += 0.5; op -= 0.02; p.style.opacity = op; requestAnimationFrame(anim); }
         requestAnimationFrame(anim);
     }
 }
 
 function spawnStickmanBattle() {
     if(document.getElementById('stickman-arena')) return;
-    
-    const arena = document.createElement('div');
-    arena.id = 'stickman-arena';
-    arena.style.position = 'fixed'; arena.style.bottom = '20px'; arena.style.left = '50%';
-    arena.style.transform = 'translateX(-50%)'; arena.style.zIndex = '9999';
-    arena.style.width = '300px'; arena.style.height = '150px'; arena.style.pointerEvents = 'none';
-    
-    arena.innerHTML = `
-    <div style="position:absolute; top:0; left:10px; width:100px; height:6px; background:#334155; border-radius:3px; overflow:hidden;">
-        <div id="f1-hp" style="width:100%; height:100%; background:#0ea5e9; transition:width 0.2s;"></div>
-    </div>
-    <div style="position:absolute; top:0; right:10px; width:100px; height:6px; background:#334155; border-radius:3px; overflow:hidden;">
-        <div id="f2-hp" style="width:100%; height:100%; background:#e11d48; transition:width 0.2s; float:right;"></div>
-    </div>
-    <div id="bam-text" style="position:absolute; top:40px; left:50%; transform:translateX(-50%); font-family:monospace; font-weight:bold; font-size:24px; color:var(--gold); text-shadow:0 2px 4px rgba(0,0,0,0.8); opacity:0; transition:opacity 0.1s;">BAM!</div>
-    <svg width="100%" height="100%" viewBox="0 0 300 150">
-        <g id="fighter1" stroke="#0ea5e9" stroke-width="4" stroke-linecap="round" fill="none" style="transition: transform 0.2s linear;">
-            <circle cx="50" cy="50" r="12" fill="#0ea5e9"/> <line x1="50" y1="62" x2="50" y2="100"/>
-            <path id="f1-arms" d="M 30 75 L 50 70 L 70 75" /> <path id="f1-legs" d="M 35 140 L 50 100 L 65 140" />
-        </g>
-        <g id="fighter2" stroke="#e11d48" stroke-width="4" stroke-linecap="round" fill="none" style="transition: transform 0.2s linear;">
-            <circle cx="250" cy="50" r="12" fill="#e11d48"/> <line x1="250" y1="62" x2="250" y2="100"/>
-            <path id="f2-arms" d="M 230 75 L 250 70 L 270 75" /> <path id="f2-legs" d="M 235 140 L 250 100 L 265 140" />
-        </g>
-    </svg>`;
+    const arena = document.createElement('div'); arena.id = 'stickman-arena'; arena.style.position = 'fixed'; arena.style.bottom = '20px'; arena.style.left = '50%'; arena.style.transform = 'translateX(-50%)'; arena.style.zIndex = '9999'; arena.style.width = '300px'; arena.style.height = '150px'; arena.style.pointerEvents = 'none';
+    arena.innerHTML = `<div style="position:absolute; top:0; left:10px; width:100px; height:6px; background:#334155; border-radius:3px; overflow:hidden;"><div id="f1-hp" style="width:100%; height:100%; background:#0ea5e9; transition:width 0.2s;"></div></div><div style="position:absolute; top:0; right:10px; width:100px; height:6px; background:#334155; border-radius:3px; overflow:hidden;"><div id="f2-hp" style="width:100%; height:100%; background:#e11d48; transition:width 0.2s; float:right;"></div></div><div id="bam-text" style="position:absolute; top:40px; left:50%; transform:translateX(-50%); font-family:monospace; font-weight:bold; font-size:24px; color:var(--gold); text-shadow:0 2px 4px rgba(0,0,0,0.8); opacity:0; transition:opacity 0.1s;">BAM!</div><svg width="100%" height="100%" viewBox="0 0 300 150"><g id="fighter1" stroke="#0ea5e9" stroke-width="4" stroke-linecap="round" fill="none" style="transition: transform 0.2s linear;"><circle cx="50" cy="50" r="12" fill="#0ea5e9"/> <line x1="50" y1="62" x2="50" y2="100"/><path id="f1-arms" d="M 30 75 L 50 70 L 70 75" /> <path id="f1-legs" d="M 35 140 L 50 100 L 65 140" /></g><g id="fighter2" stroke="#e11d48" stroke-width="4" stroke-linecap="round" fill="none" style="transition: transform 0.2s linear;"><circle cx="250" cy="50" r="12" fill="#e11d48"/> <line x1="250" y1="62" x2="250" y2="100"/><path id="f2-arms" d="M 230 75 L 250 70 L 270 75" /> <path id="f2-legs" d="M 235 140 L 250 100 L 265 140" /></g></svg>`;
     document.body.appendChild(arena);
-
-    const f1Arms = arena.querySelector('#f1-arms');
-    const f2Arms = arena.querySelector('#f2-arms');
-    const f1 = arena.querySelector('#fighter1');
-    const f2 = arena.querySelector('#fighter2');
-    const f1hpBar = arena.querySelector('#f1-hp');
-    const f2hpBar = arena.querySelector('#f2-hp');
-    const bam = arena.querySelector('#bam-text');
-
+    const f1Arms = arena.querySelector('#f1-arms'), f2Arms = arena.querySelector('#f2-arms'), f1 = arena.querySelector('#fighter1'), f2 = arena.querySelector('#fighter2'), f1hpBar = arena.querySelector('#f1-hp'), f2hpBar = arena.querySelector('#f2-hp'), bam = arena.querySelector('#bam-text');
     let f1X = 0, f2X = 0, hp1 = 100, hp2 = 100;
-    
     const interval = setInterval(() => {
-        if (f1X < 80) f1X += Math.random() * 20;
-        if (f2X > -80) f2X -= Math.random() * 20;
-        
-        f1.style.transform = `translateX(${f1X}px)`;
-        f2.style.transform = `translateX(${f2X}px)`;
-
+        if (f1X < 80) f1X += Math.random() * 20; if (f2X > -80) f2X -= Math.random() * 20;
+        f1.style.transform = `translateX(${f1X}px)`; f2.style.transform = `translateX(${f2X}px)`;
         if (f1X > 60 && f2X < -60) {
-            const hit1 = Math.random() > 0.4;
-            const hit2 = Math.random() > 0.4;
-
-            if(hit1) {
-                f1Arms.setAttribute('d', 'M 30 60 L 50 70 L 90 60'); 
-                hp2 -= Math.floor(Math.random() * 20 + 10);
-            } else {
-                f1Arms.setAttribute('d', 'M 30 75 L 50 70 L 70 75'); 
-            }
-            
-            if(hit2) {
-                f2Arms.setAttribute('d', 'M 270 60 L 250 70 L 210 60'); 
-                hp1 -= Math.floor(Math.random() * 20 + 10);
-            } else {
-                f2Arms.setAttribute('d', 'M 230 75 L 250 70 L 270 75'); 
-            }
-
-            if(hit1 || hit2) {
-                const words = ["BAM!", "POW!", "WHACK!", "CRACK!"];
-                bam.textContent = words[Math.floor(Math.random() * words.length)];
-                bam.style.opacity = '1';
-                setTimeout(() => bam.style.opacity = '0', 200);
-            }
+            const hit1 = Math.random() > 0.4, hit2 = Math.random() > 0.4;
+            if(hit1) { f1Arms.setAttribute('d', 'M 30 60 L 50 70 L 90 60'); hp2 -= Math.floor(Math.random() * 20 + 10); } else f1Arms.setAttribute('d', 'M 30 75 L 50 70 L 70 75');
+            if(hit2) { f2Arms.setAttribute('d', 'M 270 60 L 250 70 L 210 60'); hp1 -= Math.floor(Math.random() * 20 + 10); } else f2Arms.setAttribute('d', 'M 230 75 L 250 70 L 270 75');
+            if(hit1 || hit2) { const words = ["BAM!", "POW!", "WHACK!", "CRACK!"]; bam.textContent = words[Math.floor(Math.random() * words.length)]; bam.style.opacity = '1'; setTimeout(() => bam.style.opacity = '0', 200); }
         }
-
-        f1hpBar.style.width = Math.max(0, hp1) + '%';
-        f2hpBar.style.width = Math.max(0, hp2) + '%';
-
+        f1hpBar.style.width = Math.max(0, hp1) + '%'; f2hpBar.style.width = Math.max(0, hp2) + '%';
         if (hp1 <= 0 || hp2 <= 0) {
             clearInterval(interval);
-            if (hp1 <= 0) {
-                f1.style.transition = 'transform 0.5s ease-in';
-                f1.style.transform = `translate(${f1X - 20}px, 50px) rotate(-90deg)`;
-                f2.style.transform = `translate(${f2X}px, -30px)`; 
-            } else {
-                f2.style.transition = 'transform 0.5s ease-in';
-                f2.style.transform = `translate(${f2X + 20}px, 50px) rotate(90deg)`;
-                f1.style.transform = `translate(${f1X}px, -30px)`; 
-            }
-            setTimeout(() => {
-                arena.style.transition = 'opacity 1s';
-                arena.style.opacity = '0';
-                setTimeout(() => arena.remove(), 1000);
-            }, 2000);
+            if (hp1 <= 0) { f1.style.transition = 'transform 0.5s ease-in'; f1.style.transform = `translate(${f1X - 20}px, 50px) rotate(-90deg)`; f2.style.transform = `translate(${f2X}px, -30px)`; } 
+            else { f2.style.transition = 'transform 0.5s ease-in'; f2.style.transform = `translate(${f2X + 20}px, 50px) rotate(90deg)`; f1.style.transform = `translate(${f1X}px, -30px)`; }
+            setTimeout(() => { arena.style.transition = 'opacity 1s'; arena.style.opacity = '0'; setTimeout(() => arena.remove(), 1000); }, 2000);
         }
     }, 400);
 }
 
-/* ============================ CORE GAME LOGIC ============================ */
-
 function updateNextIndicator(text, pulse = false) {
   if (!els.nextIndicatorValue) return;
   els.nextIndicatorValue.textContent = text;
-  if (pulse) {
-    els.nextIndicator.classList.remove('pulse');
-    void els.nextIndicator.offsetWidth;
-    els.nextIndicator.classList.add('pulse');
+  if (pulse) { els.nextIndicator.classList.remove('pulse'); void els.nextIndicator.offsetWidth; els.nextIndicator.classList.add('pulse'); }
+}
+
+function setIndicatorVisible(visible) { els.nextIndicator.classList.toggle('visible', visible); }
+
+function calculateSpatialDifficulty(sequence, boardValues, size, mode) {
+  if (mode === 'scrambled') {
+    const badge = document.getElementById('diffBadge');
+    if(badge) { badge.textContent = 'Chaos'; badge.style.color = 'var(--tier-elite)'; badge.style.borderColor = 'var(--tier-elite)'; }
+    const sdLabel = document.getElementById('sdLabel');
+    if(sdLabel) { sdLabel.textContent = 'Chaos (Shuffling)'; sdLabel.style.color = 'var(--tier-elite)'; document.getElementById('sdScore').textContent = 'MAX'; document.getElementById('sdMult').textContent = size >= 8 ? 'x15' : size >= 7 ? 'x12' : size >= 6 ? 'x10' : 'x6'; }
+    return 5.0;
   }
-}
 
-function setIndicatorVisible(visible) {
-  els.nextIndicator.classList.toggle('visible', visible);
-}
-
-function calculateSpatialDifficulty(sequence, boardValues, size) {
   const coords = {};
-  boardValues.forEach((val, idx) => {
-    coords[val] = { r: Math.floor(idx / size), c: idx % size };
-  });
-
-  let totalDistance = 0;
-  let validJumps = 0;
+  boardValues.forEach((val, idx) => { coords[val] = { r: Math.floor(idx / size), c: idx % size }; });
+  let totalDistance = 0, validJumps = 0;
   for (let i = 1; i < sequence.length; i++) {
-    const p1 = coords[sequence[i - 1]];
-    const p2 = coords[sequence[i]];
-    if (p1 && p2) {
-      totalDistance += Math.sqrt(Math.pow(p1.r - p2.r, 2) + Math.pow(p1.c - p2.c, 2));
-      validJumps++;
-    }
+    const p1 = coords[sequence[i - 1]], p2 = coords[sequence[i]];
+    if (p1 && p2) { totalDistance += Math.sqrt(Math.pow(p1.r - p2.r, 2) + Math.pow(p1.c - p2.c, 2)); validJumps++; }
   }
   
   const avgDist = validJumps > 0 ? (totalDistance / validJumps) : 2.5;
-  
-  let rating = 'Standard';
-  let mult = 'x3';
-  let color = 'var(--text-dim)';
-  
-  if (avgDist < 2.5) { 
-    rating = 'Clustered (Easy)'; mult = 'x1'; color = 'var(--tier-beginner)'; 
-  } else if (avgDist > 3.2) { 
-    rating = 'Scattered (Hard)'; mult = 'x8'; color = 'var(--tier-elite)'; 
-  } else { 
-    rating = 'Standard'; mult = 'x3'; color = 'var(--tier-excellent)'; 
-  }
+  let rating = 'Standard', mult = 'x3', color = 'var(--text-dim)';
+  if (avgDist < 2.5) { rating = 'Clustered (Easy)'; mult = 'x1'; color = 'var(--tier-beginner)'; } 
+  else if (avgDist > 3.2) { rating = 'Scattered (Hard)'; mult = 'x8'; color = 'var(--tier-elite)'; } 
+  else { rating = 'Standard'; mult = 'x3'; color = 'var(--tier-excellent)'; }
 
   const badge = document.getElementById('diffBadge');
-  if(badge) {
-     badge.textContent = rating;
-     badge.style.color = color;
-     badge.style.borderColor = color;
-  }
-  
+  if(badge) { badge.textContent = rating; badge.style.color = color; badge.style.borderColor = color; }
   const sdLabel = document.getElementById('sdLabel');
-  if(sdLabel) {
-      sdLabel.textContent = rating;
-      sdLabel.style.color = color;
-      document.getElementById('sdScore').textContent = avgDist.toFixed(2);
-      document.getElementById('sdMult').textContent = mult;
-  }
-
+  if(sdLabel) { sdLabel.textContent = rating; sdLabel.style.color = color; document.getElementById('sdScore').textContent = avgDist.toFixed(2); document.getElementById('sdMult').textContent = mult; }
   return avgDist;
 }
 
@@ -1660,145 +1310,94 @@ function buildBoard(reshuffle = true) {
   state.size = parseInt(els.sizeSelect.value);
   state.mode = els.modeSelect.value;
   state.timeLimit = parseInt(els.timeLimitSelect.value);
-  state.currentIndex = 0;
-  state.errors = 0;
-  state.isPlaying = false;
-  state.isGameOver = false;
-  state.latencies = [];
-  clearInterval(state.timerInterval);
-  clearInterval(state.countdownInterval);
+  state.currentIndex = 0; state.errors = 0; state.isPlaying = false; state.isGameOver = false; state.latencies = [];
+  clearInterval(state.timerInterval); clearInterval(state.countdownInterval);
 
   state.sequence = generateSequence(state.mode, state.size);
-  if (reshuffle || state.boardValues.length !== state.size * state.size) {
-    state.boardValues = shuffleArray(state.sequence);
-  }
+  if (reshuffle || state.boardValues.length !== state.size * state.size) state.boardValues = shuffleArray(state.sequence);
 
-  state.spatialDifficulty = calculateSpatialDifficulty(state.sequence, state.boardValues, state.size);
+  state.spatialDifficulty = calculateSpatialDifficulty(state.sequence, state.boardValues, state.size, state.mode);
 
-  const baseMaxWidth = state.size <= 4 ? 380 : state.size === 5 ? 400 : state.size === 6 ? 430 : 460;
-  els.board.style.gridTemplateColumns = `repeat(${state.size}, 1fr)`;
-  els.board.style.maxWidth = baseMaxWidth + 'px';
-  els.board.innerHTML = '';
-  els.boardWrap.classList.remove('game-over');
+  const baseMaxWidth = state.size <= 4 ? 380 : state.size === 5 ? 400 : state.size === 6 ? 430 : state.size === 7 ? 480 : 540;
+  els.board.style.gridTemplateColumns = `repeat(${state.size}, 1fr)`; els.board.style.maxWidth = baseMaxWidth + 'px';
+  els.board.innerHTML = ''; els.boardWrap.classList.remove('game-over');
 
-  const totalCells = state.size * state.size;
-  const centerIdx = Math.floor(totalCells / 2);
-
+  const totalCells = state.size * state.size, centerIdx = Math.floor(totalCells / 2);
   state.boardValues.forEach((val, idx) => {
-    const cell = document.createElement('div');
-    cell.className = 'cell';
-    cell.textContent = val;
-    cell.dataset.val = val;
+    const cell = document.createElement('div'); cell.className = 'cell'; cell.textContent = val; cell.dataset.val = val;
     if (state.size % 2 !== 0 && idx === centerIdx) cell.classList.add('center-mark');
-    cell.addEventListener('click', () => handleClick(val, cell));
+    cell.addEventListener('click', () => handleClick(cell));
     els.board.appendChild(cell);
   });
 
-  els.targetNum.textContent = state.sequence[0];
-  els.targetSub.textContent = 'Click the next number';
-  els.timerDisplay.textContent = state.mode === 'timed' ? state.timeLimit.toFixed(2) : '0.00';
-  els.timerSub.textContent = state.mode === 'timed' ? 'seconds remaining' : 'seconds elapsed';
-  els.errorDisplay.textContent = '0';
-  updateBestDisplay();
-  updateNextIndicator(state.sequence[0], false);
-  setIndicatorVisible(true);
+  els.targetNum.textContent = state.sequence[0]; els.targetSub.textContent = 'Click the next number';
+  els.timerDisplay.textContent = state.mode === 'timed' ? state.timeLimit.toFixed(2) : '0.00'; els.timerSub.textContent = state.mode === 'timed' ? 'seconds remaining' : 'seconds elapsed'; els.errorDisplay.textContent = '0';
+  updateBestDisplay(); updateNextIndicator(state.sequence[0], false); setIndicatorVisible(true);
 }
 
-function handleClick(val, cell) {
+function handleClick(cell) {
   if (state.isGameOver) return; 
-
+  
+  const val = cell.dataset.val;
   const now = Date.now();
   if (!state.isPlaying) {
-    state.isPlaying = true;
-    state.startTime = now;
-    state.lastClickTime = now;
-    if (state.mode === 'timed') {
-      state.countdownInterval = setInterval(updateCountdown, 50);
-    } else {
-      state.timerInterval = setInterval(updateTimer, 50);
-    }
+    state.isPlaying = true; state.startTime = now; state.lastClickTime = now;
+    if (state.mode === 'timed') state.countdownInterval = setInterval(updateCountdown, 50); else state.timerInterval = setInterval(updateTimer, 50);
   }
   
   const expected = state.sequence[state.currentIndex];
   if (String(val) === String(expected)) {
     const latency = (now - state.lastClickTime) / 1000;
-    state.latencies.push(latency);
-    cell.dataset.latency = latency.toFixed(2); 
-    state.lastClickTime = now;
-
-    cell.classList.add('correct');
-    setTimeout(() => cell.classList.remove('correct'), 250);
+    state.latencies.push(latency); cell.dataset.latency = latency.toFixed(2); state.lastClickTime = now;
+    cell.classList.add('correct'); setTimeout(() => cell.classList.remove('correct'), 250);
     state.currentIndex++;
     
     if (state.currentIndex >= state.sequence.length) {
       endGame(true);
     } else {
-      els.targetNum.textContent = state.sequence[state.currentIndex];
-      updateNextIndicator(state.sequence[state.currentIndex], true);
+      els.targetNum.textContent = state.sequence[state.currentIndex]; updateNextIndicator(state.sequence[state.currentIndex], true);
+      
+      if (state.mode === 'scrambled') {
+          state.boardValues = shuffleArray(state.boardValues);
+          const cells = els.board.querySelectorAll('.cell');
+          cells.forEach((c, i) => { c.textContent = state.boardValues[i]; c.dataset.val = state.boardValues[i]; });
+      }
     }
   } else {
-    cell.classList.add('incorrect');
-    setTimeout(() => cell.classList.remove('incorrect'), 300);
-    state.errors++;
-    els.errorDisplay.textContent = state.errors;
+    cell.classList.add('incorrect'); setTimeout(() => cell.classList.remove('incorrect'), 300); state.errors++; els.errorDisplay.textContent = state.errors;
   }
 }
 
-function updateTimer() {
-  els.timerDisplay.textContent = ((Date.now() - state.startTime) / 1000).toFixed(2);
-}
-
+function updateTimer() { els.timerDisplay.textContent = ((Date.now() - state.startTime) / 1000).toFixed(2); }
 function updateCountdown() {
-  const elapsed = (Date.now() - state.startTime) / 1000;
-  const remaining = state.timeLimit - elapsed;
-  if (remaining <= 0) {
-    els.timerDisplay.textContent = '0.00';
-    endGame(false);
-    return;
-  }
+  const remaining = state.timeLimit - ((Date.now() - state.startTime) / 1000);
+  if (remaining <= 0) { els.timerDisplay.textContent = '0.00'; endGame(false); return; }
   els.timerDisplay.textContent = remaining.toFixed(2);
 }
 
 function updateBestDisplay() {
   const matching = state.history.filter(h => h.mode === state.mode && h.size === state.size && h.completed && h.legit !== false);
-  if (matching.length === 0) {
-    els.bestDisplay.textContent = 'N/A';
-    els.bestSub.textContent = 'no records yet';
-    return;
-  }
+  if (matching.length === 0) { els.bestDisplay.textContent = 'N/A'; els.bestSub.textContent = 'no records yet'; return; }
   if (state.mode === 'timed') {
     const fullClears = matching.filter(h => h.fullClear);
-    if (fullClears.length > 0) {
-      els.bestDisplay.textContent = Math.min(...fullClears.map(h => h.time)).toFixed(2);
-      els.bestSub.textContent = 'fastest full clear';
-    } else {
-      els.bestDisplay.textContent = Math.max(...matching.map(h => h.numbersReached || 0));
-      els.bestSub.textContent = 'most numbers reached';
-    }
+    if (fullClears.length > 0) { els.bestDisplay.textContent = Math.min(...fullClears.map(h => h.time)).toFixed(2); els.bestSub.textContent = 'fastest full clear'; } 
+    else { els.bestDisplay.textContent = Math.max(...matching.map(h => h.numbersReached || 0)); els.bestSub.textContent = 'most numbers reached'; }
   } else {
-    els.bestDisplay.textContent = Math.min(...matching.map(h => h.time)).toFixed(2);
-    els.bestSub.textContent = 'this mode + size';
+    els.bestDisplay.textContent = Math.min(...matching.map(h => h.time)).toFixed(2); els.bestSub.textContent = 'this mode + size';
   }
 }
 
 function triggerQuickOverview(session) {
     els.qoTitle.textContent = session.isRecord ? 'New Personal Best!' : 'Run Complete';
     els.qoStats.innerHTML = `Time: <strong>${session.time.toFixed(2)}s</strong> &nbsp;|&nbsp; Errors: <strong>${session.errors}</strong> &nbsp;|&nbsp; XP: <strong style="color:var(--accent)">+${session.exp}</strong>`;
-    
-    els.quickOverview.classList.add('visible');
-    setTimeout(() => els.quickOverview.classList.remove('visible'), 2800);
+    els.quickOverview.classList.add('visible'); setTimeout(() => els.quickOverview.classList.remove('visible'), 2800);
 }
 
 function endGame(completed) {
-  clearInterval(state.timerInterval);
-  clearInterval(state.countdownInterval);
-  state.isPlaying = false;
-  state.isGameOver = true;
-  els.boardWrap.classList.add('game-over');
-
+  clearInterval(state.timerInterval); clearInterval(state.countdownInterval);
+  state.isPlaying = false; state.isGameOver = true; els.boardWrap.classList.add('game-over');
   const elapsed = (Date.now() - state.startTime) / 1000;
-  if (state.mode === 'timed') handleTimedEnd(completed, elapsed);
-  else if (completed) handleStandardEnd(elapsed);
+  if (state.mode === 'timed') handleTimedEnd(completed, elapsed); else if (completed) handleStandardEnd(elapsed);
 }
 
 function handleStandardEnd(time) {
@@ -1807,229 +1406,96 @@ function handleStandardEnd(time) {
   const isRecord = time < priorBest;
   
   const { exp, tier, multiplier, diffMultiplier } = calculateExp(time, state.size, state.mode, isRecord, state.spatialDifficulty);
-  state.pendingSession = { 
-    mode: state.mode, size: state.size, time, tier, exp,
-    errors: state.errors, completed: true, isRecord, multiplier, 
-    diffMultiplier, latencies: [...state.latencies], spatialDifficulty: state.spatialDifficulty,
-    sequence: [...state.sequence],
-    ts: Date.now() 
-  };
-  
-  els.legitModal.classList.add('visible');
-  els.targetNum.textContent = 'Done!';
-  els.targetSub.textContent = 'Click New Game';
-  setIndicatorVisible(false);
+  state.pendingSession = { mode: state.mode, size: state.size, time, tier, exp, errors: state.errors, completed: true, isRecord, multiplier, diffMultiplier, latencies: [...state.latencies], spatialDifficulty: state.spatialDifficulty, sequence: [...state.sequence], ts: Date.now() };
+  els.legitModal.classList.add('visible'); els.targetNum.textContent = 'Done!'; els.targetSub.textContent = 'Click New Game'; setIndicatorVisible(false);
 }
 
 function handleTimedEnd(completed, elapsed) {
-  const numbersReached = state.currentIndex;
-  const totalNumbers = state.sequence.length;
-  const fullClear = completed && numbersReached === totalNumbers;
-  const time = fullClear ? elapsed : state.timeLimit;
-  const completionPct = numbersReached / totalNumbers;
+  const numbersReached = state.currentIndex, totalNumbers = state.sequence.length, fullClear = completed && numbersReached === totalNumbers;
+  const time = fullClear ? elapsed : state.timeLimit, completionPct = numbersReached / totalNumbers;
   let exp, tier, diffMultiplier = 1;
   
   if (fullClear) {
     const r = calculateExp(elapsed, state.size, state.mode, false, state.spatialDifficulty);
     exp = r.exp; tier = r.tier; diffMultiplier = r.diffMultiplier;
   } else {
-    if (completionPct >= 0.9) { exp = 40; tier = 'excellent'; }
-    else if (completionPct >= 0.7) { exp = 25; tier = 'average'; }
-    else if (completionPct >= 0.4) { exp = 10; tier = 'beginner'; }
-    else { exp = 5; tier = 'beginner'; }
+    if (completionPct >= 0.9) { exp = 40; tier = 'excellent'; } else if (completionPct >= 0.7) { exp = 25; tier = 'average'; } else if (completionPct >= 0.4) { exp = 10; tier = 'beginner'; } else { exp = 5; tier = 'beginner'; }
   }
   
   const prior = state.history.filter(h => h.mode === 'timed' && h.size === state.size && h.legit !== false);
   let isRecord = false, multiplier = 1;
   
   if (fullClear) {
-    const priorClears = prior.filter(h => h.fullClear);
-    const priorBest = priorClears.length > 0 ? Math.min(...priorClears.map(h => h.time)) : Infinity;
-    if (elapsed < priorBest) {
-      isRecord = true;
-      multiplier = TIER_RECORD_MULT[tier] || 1;
-      exp = Math.round(exp * multiplier);
-    }
+    const priorClears = prior.filter(h => h.fullClear), priorBest = priorClears.length > 0 ? Math.min(...priorClears.map(h => h.time)) : Infinity;
+    if (elapsed < priorBest) { isRecord = true; multiplier = TIER_RECORD_MULT[tier] || 1; exp = Math.round(exp * multiplier); }
   } else {
     const priorMax = prior.length > 0 ? Math.max(...prior.map(h => h.numbersReached || 0)) : 0;
-    if (numbersReached > priorMax && numbersReached >= 5) {
-      isRecord = true; multiplier = 2; exp = Math.round(exp * multiplier);
-    }
+    if (numbersReached > priorMax && numbersReached >= 5) { isRecord = true; multiplier = 2; exp = Math.round(exp * multiplier); }
   }
   
-  state.pendingSession = { 
-    mode: 'timed', size: state.size, time, tier, exp,
-    errors: state.errors, completed: true, fullClear,
-    numbersReached, totalNumbers, timeLimit: state.timeLimit,
-    isRecord, multiplier, diffMultiplier, latencies: [...state.latencies], spatialDifficulty: state.spatialDifficulty,
-    sequence: [...state.sequence],
-    ts: Date.now() 
-  };
-  
-  els.legitModal.classList.add('visible');
-  els.targetNum.textContent = fullClear ? 'Done!' : 'Time up';
-  els.targetSub.textContent = 'Click New Game';
-  setIndicatorVisible(false);
+  state.pendingSession = { mode: 'timed', size: state.size, time, tier, exp, errors: state.errors, completed: true, fullClear, numbersReached, totalNumbers, timeLimit: state.timeLimit, isRecord, multiplier, diffMultiplier, latencies: [...state.latencies], spatialDifficulty: state.spatialDifficulty, sequence: [...state.sequence], ts: Date.now() };
+  els.legitModal.classList.add('visible'); els.targetNum.textContent = fullClear ? 'Done!' : 'Time up'; els.targetSub.textContent = 'Click New Game'; setIndicatorVisible(false);
 }
 
 function processPendingSession(isLegit) {
   if(!state.pendingSession) return;
   els.legitModal.classList.remove('visible');
-  
   state.pendingSession.legit = isLegit;
-  if(!isLegit) {
-      state.pendingSession.exp = Math.floor(state.pendingSession.exp * 0.75);
-      state.pendingSession.isRecord = false; 
-  }
-  
+  if(!isLegit) { state.pendingSession.exp = Math.floor(state.pendingSession.exp * 0.75); state.pendingSession.isRecord = false; }
   recordSession(state.pendingSession);
-  
-  if (state.pendingSession.mode === 'timed') showTimedResult(state.pendingSession);
-  else showResult(state.pendingSession);
-  
-  triggerQuickOverview(state.pendingSession);
-  state.pendingSession = null;
+  if (state.pendingSession.mode === 'timed') showTimedResult(state.pendingSession); else showResult(state.pendingSession);
+  triggerQuickOverview(state.pendingSession); state.pendingSession = null;
 }
 
-els.legitYesBtn.addEventListener('click', () => processPendingSession(true));
-els.legitNoBtn.addEventListener('click', () => processPendingSession(false));
-
-els.legitModal.addEventListener('click', (e) => {
-    if (e.target === els.legitModal && state.pendingSession) {
-        processPendingSession(true);
-    }
-});
+els.legitYesBtn.addEventListener('click', () => processPendingSession(true)); els.legitNoBtn.addEventListener('click', () => processPendingSession(false));
+els.legitModal.addEventListener('click', (e) => { if (e.target === els.legitModal && state.pendingSession) processPendingSession(true); });
 
 function recordSession(session) {
-  state.history.unshift(session);
-  if (state.history.length > 1000) state.history = state.history.slice(0, 1000);
-  const beforeLevel = levelFromExp(state.totalExp).level;
-  state.totalExp += session.exp;
-  const afterLevel = levelFromExp(state.totalExp).level;
-  saveState();
-  updateLevelDisplay();
-  updateBestDisplay();
-  
+  state.history.unshift(session); if (state.history.length > 1000) state.history = state.history.slice(0, 1000);
+  const beforeLevel = levelFromExp(state.totalExp).level; state.totalExp += session.exp; const afterLevel = levelFromExp(state.totalExp).level;
+  saveState(); updateLevelDisplay(); updateBestDisplay();
   setTimeout(() => spawnXpBurst(session.exp, session.legit ? session.tier : 'penalty'), 80);
   
   if (afterLevel > beforeLevel) {
-    // Check for unlocks
     const newUnlocks = UNLOCKS.filter(u => u.level > beforeLevel && u.level <= afterLevel);
-    if (newUnlocks.length > 0) {
-      const last = newUnlocks[newUnlocks.length - 1];
-      showLevelupToast(`Level ${afterLevel} reached`, `Unlocked: ${last.name}`);
-      newUnlocks.forEach(u => {
-          if (state.unseenUnlocks && !state.unseenUnlocks.includes(u.key)) state.unseenUnlocks.push(u.key);
-      });
-    } else {
-      showLevelupToast(`Level ${afterLevel} reached`, getTierName(afterLevel));
-    }
-    
-    // Check for toys
+    if (newUnlocks.length > 0) { showLevelupToast(`Level ${afterLevel} reached`, `Unlocked: ${newUnlocks[newUnlocks.length - 1].name}`); newUnlocks.forEach(u => { if (state.unseenUnlocks && !state.unseenUnlocks.includes(u.key)) state.unseenUnlocks.push(u.key); }); } else { showLevelupToast(`Level ${afterLevel} reached`, getTierName(afterLevel)); }
     const newToys = TOYS.filter(t => t.level > beforeLevel && t.level <= afterLevel);
-    if (newToys.length > 0) {
-        newToys.forEach(t => {
-            if (state.unseenToys && !state.unseenToys.includes(t.id)) state.unseenToys.push(t.id);
-        });
-    }
-    
-    saveState();
-    renderToybox(afterLevel);
-    renderUnlocksGrid(afterLevel);
-    renderRewardsTab();
+    if (newToys.length > 0) { newToys.forEach(t => { if (state.unseenToys && !state.unseenToys.includes(t.id)) state.unseenToys.push(t.id); }); }
+    saveState(); renderToybox(afterLevel); renderUnlocksGrid(afterLevel); renderRewardsTab();
   }
 }
 
 function showLevelupToast(title, sub) {
-  els.levelupTitle.textContent = title;
-  els.levelupSub.textContent = sub;
-  els.levelupToast.classList.add('visible');
-  clearTimeout(showLevelupToast._t);
-  showLevelupToast._t = setTimeout(() => {
-    els.levelupToast.classList.remove('visible');
-  }, 3500);
-  els.characterFrame.style.boxShadow = '0 0 0 3px var(--gold), 0 0 32px -4px var(--gold)';
-  setTimeout(() => { els.characterFrame.style.boxShadow = ''; }, 1200);
+  els.levelupTitle.textContent = title; els.levelupSub.textContent = sub; els.levelupToast.classList.add('visible');
+  clearTimeout(showLevelupToast._t); showLevelupToast._t = setTimeout(() => els.levelupToast.classList.remove('visible'), 3500);
+  els.characterFrame.style.boxShadow = '0 0 0 3px var(--gold), 0 0 32px -4px var(--gold)'; setTimeout(() => els.characterFrame.style.boxShadow = '', 1200);
 }
 
 function spawnXpBurst(amount, tier, originX, originY) {
   if (originX == null || originY == null) {
     const boardEl = document.getElementById('board');
-    if (boardEl) {
-      const r = boardEl.getBoundingClientRect();
-      originX = r.left + r.width / 2;
-      originY = r.top + r.height / 2;
-    } else {
-      originX = window.innerWidth / 2;
-      originY = window.innerHeight / 2;
-    }
+    if (boardEl) { const r = boardEl.getBoundingClientRect(); originX = r.left + r.width / 2; originY = r.top + r.height / 2; } else { originX = window.innerWidth / 2; originY = window.innerHeight / 2; }
   }
-
   const colourClass = tier === 'elite' ? 'purple' : tier === 'excellent' ? '' : tier === 'average' ? 'gold' : tier === 'penalty' ? 'penalty' : '';
-
-  const particle = document.createElement('div');
-  particle.className = 'xp-particle ' + colourClass;
-  particle.textContent = '+' + amount + ' XP';
-  particle.style.left = originX + 'px';
-  particle.style.top = originY + 'px';
-  document.body.appendChild(particle);
-  setTimeout(() => particle.remove(), 1500);
+  const particle = document.createElement('div'); particle.className = 'xp-particle ' + colourClass; particle.textContent = '+' + amount + ' XP'; particle.style.left = originX + 'px'; particle.style.top = originY + 'px'; document.body.appendChild(particle); setTimeout(() => particle.remove(), 1500);
 
   if (tier !== 'penalty') {
       const sparkleCount = tier === 'elite' ? 14 : tier === 'excellent' ? 10 : 6;
       for (let i = 0; i < sparkleCount; i++) {
-        const s = document.createElement('div');
-        s.className = 'sparkle ' + colourClass;
-        s.style.left = (originX - 3) + 'px';
-        s.style.top = (originY - 3) + 'px';
-        const angle = (Math.PI * 2 * i) / sparkleCount + Math.random() * 0.4;
-        const distance = 60 + Math.random() * 50;
-        const dx = Math.cos(angle) * distance;
-        const dy = Math.sin(angle) * distance;
-        s.style.transition = 'all 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-        document.body.appendChild(s);
-        requestAnimationFrame(() => {
-          s.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`;
-          s.style.opacity = '0';
-        });
+        const s = document.createElement('div'); s.className = 'sparkle ' + colourClass; s.style.left = (originX - 3) + 'px'; s.style.top = (originY - 3) + 'px';
+        const angle = (Math.PI * 2 * i) / sparkleCount + Math.random() * 0.4, distance = 60 + Math.random() * 50, dx = Math.cos(angle) * distance, dy = Math.sin(angle) * distance;
+        s.style.transition = 'all 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94)'; document.body.appendChild(s);
+        requestAnimationFrame(() => { s.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`; s.style.opacity = '0'; });
         setTimeout(() => s.remove(), 1000);
       }
   }
-
-  els.expBarFill.classList.remove('gaining');
-  void els.expBarFill.offsetWidth;
-  els.expBarFill.classList.add('gaining');
-}
-
-function toggleFocusMode(force) {
-  state.focus = (force !== undefined) ? force : !state.focus;
-  document.body.classList.toggle('focus', state.focus);
-  
-  if (state.focus) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.querySelector('.tab[data-tab="play"]').classList.add('active');
-    document.getElementById('view-play').classList.add('active');
-  } else {
-    // Reset drag and scale when exiting
-    fX = 0; fY = 0; fScale = 1;
-    updateFocusTransform();
-    if(focusDragMode) {
-        focusDragMode = false;
-        els.focusDragBtn.classList.remove('active-toggle');
-        document.body.classList.remove('focus-drag-mode');
-    }
-  }
+  els.expBarFill.classList.remove('gaining'); void els.expBarFill.offsetWidth; els.expBarFill.classList.add('gaining');
 }
 
 function showResult(session) {
-  els.resultCard.classList.add('visible');
-  els.resultTime.textContent = session.time.toFixed(2) + 's';
-  els.resultTier.className = 'result-tier tier-' + session.tier;
-  els.resultTier.textContent = TIER_LABELS[session.tier];
-  
+  els.resultCard.classList.add('visible'); els.resultTime.textContent = session.time.toFixed(2) + 's';
+  els.resultTier.className = 'result-tier tier-' + session.tier; els.resultTier.textContent = TIER_LABELS[session.tier];
   let html = `<div style="width:100%; margin-bottom:8px;">Base XP: ${TIER_BASE_EXP[session.tier] || 0} &times; Diff: x${session.diffMultiplier} <span style="margin:0 8px; color:var(--border-strong)">|</span> <strong>Total: +${session.exp} XP</strong></div>`;
-  
   if(!session.legit) html += `<div style="color:var(--gold);font-size:11px;width:100%">Drift Penalty Applied (-25% XP)</div>`;
   if (session.isRecord) html += `<div class="multiplier-badge">★ NEW RECORD x${session.multiplier}</div>`;
   if (session.errors > 0) html += `<div>Errors: ${session.errors}</div>`;
@@ -2039,16 +1505,10 @@ function showResult(session) {
 function showTimedResult(session) {
   els.resultCard.classList.add('visible');
   els.resultTime.textContent = session.fullClear ? session.time.toFixed(2) + 's' : `${session.numbersReached} / ${session.totalNumbers}`;
-  els.resultTier.className = 'result-tier tier-' + session.tier;
-  els.resultTier.textContent = session.fullClear ? TIER_LABELS[session.tier] : 'Partial';
-  
+  els.resultTier.className = 'result-tier tier-' + session.tier; els.resultTier.textContent = session.fullClear ? TIER_LABELS[session.tier] : 'Partial';
   let html = `<div style="width:100%; margin-bottom:8px;">Base XP: ${TIER_BASE_EXP[session.tier] || 0} &times; Diff: x${session.diffMultiplier} <span style="margin:0 8px; color:var(--border-strong)">|</span> <strong>Total: +${session.exp} XP</strong></div>`;
-  
   if(!session.legit) html += `<div style="color:var(--gold);font-size:11px;width:100%">Drift Penalty Applied (-25% XP)</div>`;
-  if (session.isRecord) {
-    const label = session.fullClear ? 'NEW RECORD' : 'NEW HIGH';
-    html += `<div class="multiplier-badge">★ ${label} x${session.multiplier}</div>`;
-  }
+  if (session.isRecord) html += `<div class="multiplier-badge">★ ${session.fullClear ? 'NEW RECORD' : 'NEW HIGH'} x${session.multiplier}</div>`;
   if (session.errors > 0) html += `<div>Errors: ${session.errors}</div>`;
   els.resultExp.innerHTML = html;
 }
@@ -2056,292 +1516,118 @@ function showTimedResult(session) {
 function updateLevelDisplay() {
   try {
       const { level, currentInLevel, neededForNext } = levelFromExp(state.totalExp);
-      els.levelDisplay.textContent = level;
-      els.levelDisplay.classList.toggle('maxed', level >= MAX_LEVEL);
-      els.levelTierName.textContent = getTierName(level);
+      els.levelDisplay.textContent = level; els.levelDisplay.classList.toggle('maxed', level >= MAX_LEVEL); els.levelTierName.textContent = getTierName(level);
       const pct = level >= MAX_LEVEL ? 100 : (currentInLevel / neededForNext) * 100;
-      els.expBarFill.style.width = pct + '%';
-      els.expText.textContent = level >= MAX_LEVEL ? 'MAX LEVEL' : `${currentInLevel} / ${neededForNext} XP`;
-
+      els.expBarFill.style.width = pct + '%'; els.expText.textContent = level >= MAX_LEVEL ? 'MAX LEVEL' : `${currentInLevel} / ${neededForNext} XP`;
       els.characterFrame.classList.toggle('high-tier', level >= 50);
-      
       renderToybox(level);
-
       const charSvg = buildCharacterSvg(level, state.gender);
-      els.characterSvg.innerHTML = charSvg;
-      if (els.characterSvgLarge) els.characterSvgLarge.innerHTML = charSvg;
-
-      const charLevel = document.getElementById('charLevel');
-      if (charLevel) {
-        charLevel.textContent = 'Level ' + level;
-        document.getElementById('charTierName').textContent = getTierName(level);
-        document.getElementById('charExpFill').style.width = pct + '%';
-        document.getElementById('charExpCurrent').textContent = level >= MAX_LEVEL ? 'MAX' : (currentInLevel + ' XP');
+      els.characterSvg.innerHTML = charSvg; if (els.characterSvgLarge) els.characterSvgLarge.innerHTML = charSvg;
+      if (document.getElementById('charLevel')) {
+        document.getElementById('charLevel').textContent = 'Level ' + level; document.getElementById('charTierName').textContent = getTierName(level);
+        document.getElementById('charExpFill').style.width = pct + '%'; document.getElementById('charExpCurrent').textContent = level >= MAX_LEVEL ? 'MAX' : (currentInLevel + ' XP');
         document.getElementById('charExpNext').textContent = level >= MAX_LEVEL ? '' : ('/ ' + neededForNext + ' XP');
-
-        const pill = document.getElementById('charPill');
-        if (pill) pill.textContent = `Level ${level} · ${getTierName(level)}`;
-
-        renderBaseCustomisation();
-        renderUnlocksGrid(level);
-        renderRewardsTab();
+        if (document.getElementById('charPill')) document.getElementById('charPill').textContent = `Level ${level} · ${getTierName(level)}`;
+        renderBaseCustomisation(); renderUnlocksGrid(level); renderRewardsTab();
       }
-  } catch(e) {
-      console.warn("Recovered from level display logic error:", e);
-  }
+  } catch(e) {}
 }
 
 function renderBaseCustomisation() {
-    const skinPicker = document.getElementById('picker-skin');
-    if (skinPicker) {
-        skinPicker.value = state.baseColours.skinColour || '#d4a574';
-        skinPicker.onchange = (e) => { state.baseColours.skinColour = e.target.value; saveState(); updateLevelDisplay(); };
-    }
-    
-    const hairPicker = document.getElementById('picker-hair');
-    if (hairPicker) {
-        hairPicker.value = state.baseColours.hairColour || '#3d2817';
-        hairPicker.onchange = (e) => { state.baseColours.hairColour = e.target.value; saveState(); updateLevelDisplay(); };
-    }
-    
-    const shirtPicker = document.getElementById('picker-shirt');
-    if (shirtPicker) {
-        shirtPicker.value = state.baseColours.baseShirt || '#e6eaf2';
-        shirtPicker.onchange = (e) => { state.baseColours.baseShirt = e.target.value; saveState(); updateLevelDisplay(); };
-    }
-    
-    const hairStylePicker = document.getElementById('hairStylePicker');
-    if(hairStylePicker) {
-        hairStylePicker.value = state.baseStyles.hair;
-        hairStylePicker.onchange = (e) => { state.baseStyles.hair = e.target.value; saveState(); updateLevelDisplay(); };
-    }
+    const s = document.getElementById('picker-skin'), h = document.getElementById('picker-hair'), b = document.getElementById('picker-shirt'), hs = document.getElementById('hairStylePicker');
+    if (s) { s.value = state.baseColours.skinColour || '#d4a574'; s.onchange = (e) => { state.baseColours.skinColour = e.target.value; saveState(); updateLevelDisplay(); }; }
+    if (h) { h.value = state.baseColours.hairColour || '#3d2817'; h.onchange = (e) => { state.baseColours.hairColour = e.target.value; saveState(); updateLevelDisplay(); }; }
+    if (b) { b.value = state.baseColours.baseShirt || '#e6eaf2'; b.onchange = (e) => { state.baseColours.baseShirt = e.target.value; saveState(); updateLevelDisplay(); }; }
+    if (hs) { hs.value = state.baseStyles.hair; hs.onchange = (e) => { state.baseStyles.hair = e.target.value; saveState(); updateLevelDisplay(); }; }
 }
 
 function toggleEquip(category, key) {
-    if (key !== null && state.unseenUnlocks && state.unseenUnlocks.includes(key)) {
-        state.unseenUnlocks = state.unseenUnlocks.filter(k => k !== key);
-    }
-    
-    if (key === null || (state.equipped && state.equipped[category] === key)) {
-        state.equipped[category] = null; 
-    } else {
-        state.equipped[category] = key;
-    }
-    saveState();
-    updateLevelDisplay();
+    if (key !== null && state.unseenUnlocks && state.unseenUnlocks.includes(key)) state.unseenUnlocks = state.unseenUnlocks.filter(k => k !== key);
+    if (key === null || (state.equipped && state.equipped[category] === key)) state.equipped[category] = null; else state.equipped[category] = key;
+    saveState(); updateLevelDisplay();
 }
 
 function updateItemColour(key, colour) {
-    if (state.unseenUnlocks && state.unseenUnlocks.includes(key)) {
-        state.unseenUnlocks = state.unseenUnlocks.filter(k => k !== key);
-    }
-    state.itemColours[key] = colour;
-    saveState();
-    updateLevelDisplay();
+    if (state.unseenUnlocks && state.unseenUnlocks.includes(key)) state.unseenUnlocks = state.unseenUnlocks.filter(k => k !== key);
+    state.itemColours[key] = colour; saveState(); updateLevelDisplay();
 }
 
 function renderUnlocksGrid(level) {
   try {
-      const container = document.getElementById('unlocksCategories');
-      if (!container) return;
-
-      const categories = ['headwear', 'face', 'clothing', 'effect', 'aura'];
+      const container = document.getElementById('unlocksCategories'); if (!container) return;
       let html = '';
-
-      categories.forEach(cat => {
-          const items = UNLOCKS.filter(u => u.category === cat);
-          if (items.length === 0) return;
-          
+      ['headwear', 'face', 'clothing', 'effect', 'aura'].forEach(cat => {
+          const items = UNLOCKS.filter(u => u.category === cat); if (items.length === 0) return;
           html += `<div class="equip-category-title">${cat}</div><div class="unlocks-grid">`;
-          
           const isNoneEquipped = !state.equipped || !state.equipped[cat];
-          html += `
-            <div class="unlock achieved ${isNoneEquipped ? 'equipped' : ''}" onclick="toggleEquip('${cat}', null)" style="border-style: dashed;">
-              <div class="unlock-info">
-                <span class="unlock-name">None</span>
-                <span style="font-size:10px; color:var(--text-faint); margin-top:2px;">${isNoneEquipped ? 'Equipped' : 'Click to unequip'}</span>
-              </div>
-            </div>
-          `;
-          
+          html += `<div class="unlock achieved ${isNoneEquipped ? 'equipped' : ''}" onclick="toggleEquip('${cat}', null)" style="border-style: dashed;"><div class="unlock-info"><span class="unlock-name">None</span><span style="font-size:10px; color:var(--text-faint); margin-top:2px;">${isNoneEquipped ? 'Equipped' : 'Click to unequip'}</span></div></div>`;
           items.forEach(u => {
-              const achieved = level >= u.level;
-              const equipped = state.equipped && state.equipped[cat] === u.key;
-              const currentColour = (state.itemColours && state.itemColours[u.key]) ? state.itemColours[u.key] : u.defaultColour;
-              const isNew = state.unseenUnlocks && state.unseenUnlocks.includes(u.key);
-              
-              if (!achieved) {
-                  html += `
-                    <div class="unlock">
-                      <div class="unlock-info">
-                        <span class="unlock-level">L${u.level}</span>
-                        <span class="unlock-name">${u.name}</span>
-                      </div>
-                    </div>
-                  `;
-              } else {
-                  html += `
-                    <div class="unlock achieved ${equipped ? 'equipped' : ''} ${isNew && !equipped ? 'shiny-new' : ''}" onclick="toggleEquip('${cat}', '${u.key}')">
-                      <div class="unlock-info">
-                        <span class="unlock-name">${u.name}</span>
-                        <span style="font-size:10px; color:var(--text-faint); margin-top:2px;">${equipped ? 'Equipped' : 'Click to equip'}</span>
-                      </div>
-                      <div class="colour-picker-wrap" onclick="event.stopPropagation()">
-                          <input type="color" value="${currentColour}" class="colour-picker-btn" onchange="updateItemColour('${u.key}', this.value)" title="Change item colour">
-                      </div>
-                    </div>
-                  `;
-              }
+              const achieved = level >= u.level, equipped = state.equipped && state.equipped[cat] === u.key, currentColour = (state.itemColours && state.itemColours[u.key]) ? state.itemColours[u.key] : u.defaultColour, isNew = state.unseenUnlocks && state.unseenUnlocks.includes(u.key);
+              if (!achieved) html += `<div class="unlock"><div class="unlock-info"><span class="unlock-level">L${u.level}</span><span class="unlock-name">${u.name}</span></div></div>`;
+              else html += `<div class="unlock achieved ${equipped ? 'equipped' : ''} ${isNew && !equipped ? 'shiny-new' : ''}" onclick="toggleEquip('${cat}', '${u.key}')"><div class="unlock-info"><span class="unlock-name">${u.name}</span><span style="font-size:10px; color:var(--text-faint); margin-top:2px;">${equipped ? 'Equipped' : 'Click to equip'}</span></div><div class="colour-picker-wrap" onclick="event.stopPropagation()"><input type="color" value="${currentColour}" class="colour-picker-btn" onchange="updateItemColour('${u.key}', this.value)" title="Change item colour"></div></div>`;
           });
           html += `</div>`;
       });
-
       container.innerHTML = html;
-  } catch(e) {
-      console.warn("Unlocks rendering error:", e);
-  }
+  } catch(e) {}
 }
 
 function renderRewardsTab() {
-    const rewardsList = document.getElementById('rewardsList');
-    if(!rewardsList) return;
+    const rewardsList = document.getElementById('rewardsList'); if(!rewardsList) return;
     const currentLevel = levelFromExp(state.totalExp).level;
-    
-    const allRewards = [...UNLOCKS.map(u => ({...u, type: 'Wardrobe'})), ...TOYS.map(t => ({...t, type: 'Toybox'}))];
-    allRewards.sort((a, b) => a.level - b.level);
-    
-    let html = '';
-    allRewards.forEach(r => {
-        const unlocked = currentLevel >= r.level;
-        html += `
-            <div class="reward-row ${unlocked ? '' : 'locked'}">
-                <div class="r-level">L${r.level}</div>
-                <div class="r-details">
-                    <div class="r-title">${r.icon || '✨'} ${r.name}</div>
-                    <div class="r-sub">${r.desc}</div>
-                </div>
-                <div class="r-type">${r.type}</div>
-            </div>
-        `;
-    });
-    
-    rewardsList.innerHTML = html;
+    const allRewards = [...UNLOCKS.map(u => ({...u, type: 'Wardrobe'})), ...TOYS.map(t => ({...t, type: 'Toybox'}))].sort((a, b) => a.level - b.level);
+    rewardsList.innerHTML = allRewards.map(r => `<div class="reward-row ${currentLevel >= r.level ? '' : 'locked'}"><div class="r-level">L${r.level}</div><div class="r-details"><div class="r-title">${r.icon || '✨'} ${r.name}</div><div class="r-sub">${r.desc}</div></div><div class="r-type">${r.type}</div></div>`).join('');
 }
 
 function openSessionModalByTs(ts) {
-  const s = state.history.find(h => h.ts === ts);
-  if (!s) return;
-  
+  const s = state.history.find(h => h.ts === ts); if (!s) return;
   const date = new Date(s.ts);
   els.smDate.textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   els.smTitle.textContent = `${s.mode.charAt(0).toUpperCase() + s.mode.slice(1)} · ${s.size}x${s.size}`;
-  
-  els.smTier.className = 'result-tier tier-' + s.tier;
-  els.smTier.textContent = TIER_LABELS[s.tier] || s.tier;
-  
-  els.smTime.textContent = s.time.toFixed(2) + 's';
-  els.smErrors.textContent = s.errors || 0;
-  
+  els.smTier.className = 'result-tier tier-' + s.tier; els.smTier.textContent = TIER_LABELS[s.tier] || s.tier;
+  els.smTime.textContent = s.time.toFixed(2) + 's'; els.smErrors.textContent = s.errors || 0;
   const avgClick = s.latencies && s.latencies.length ? (s.time / s.latencies.length).toFixed(2) : 'N/A';
-  els.smAvgClick.textContent = avgClick !== 'N/A' ? avgClick + 's' : 'N/A';
-  
-  const diff = s.spatialDifficulty ? s.spatialDifficulty.toFixed(2) : 'N/A';
-  els.smDiff.textContent = diff;
+  els.smAvgClick.textContent = avgClick !== 'N/A' ? avgClick + 's' : 'N/A'; els.smDiff.textContent = s.spatialDifficulty ? s.spatialDifficulty.toFixed(2) : 'N/A';
 
   const pastSessions = state.history.filter(h => h.ts <= ts && h.mode === s.mode && h.size === s.size && h.completed && h.legit !== false);
-  let histAvg = 'N/A';
-  if (pastSessions.length > 1) {
-      const prior = pastSessions.filter(h => h.ts < ts);
-      if (prior.length > 0) {
-          histAvg = (prior.reduce((acc, h) => acc + h.time, 0) / prior.length).toFixed(2);
-      }
-  }
+  let histAvg = 'N/A'; if (pastSessions.length > 1) { const prior = pastSessions.filter(h => h.ts < ts); if (prior.length > 0) histAvg = (prior.reduce((acc, h) => acc + h.time, 0) / prior.length).toFixed(2); }
 
   let insightsHtml = '';
-  if (s.legit === false) {
-      insightsHtml += `<p style="margin-bottom:12px; color:var(--gold);"><strong>This was flagged as a practice/drift run.</strong> This performance is excluded from your core analytics to preserve the purity of your peripheral progression data.</p>`;
-  } else {
+  if (s.legit === false) { insightsHtml += `<p style="margin-bottom:12px; color:var(--gold);"><strong>This was flagged as a practice/drift run.</strong> This performance is excluded from your core analytics to preserve the purity of your peripheral progression data.</p>`; } 
+  else {
       if (s.latencies && s.latencies.length > 0) {
-          const maxPause = Math.max(...s.latencies);
-          const avgPause = s.time / s.latencies.length;
-          
-          if (maxPause > avgPause * 2.5 && maxPause > 2.0) {
-              insightsHtml += `<p style="margin-bottom:12px; color:var(--accent);">You had a long pause of <strong>${maxPause.toFixed(1)}s</strong> searching for a number, but you successfully maintained your central focus. Many people break their peripheral lock and scan manually here. Excellent mental control.</p>`;
-          } else {
-               insightsHtml += `<p style="margin-bottom:12px">Your clicking rhythm was highly consistent. Good peripheral locking.</p>`;
-          }
+          const maxPause = Math.max(...s.latencies), avgPause = s.time / s.latencies.length;
+          if (maxPause > avgPause * 2.5 && maxPause > 2.0) insightsHtml += `<p style="margin-bottom:12px; color:var(--accent);">You had a long pause of <strong>${maxPause.toFixed(1)}s</strong> searching for a number, but you successfully maintained your central focus. Many people break their peripheral lock and scan manually here. Excellent mental control.</p>`;
+          else insightsHtml += `<p style="margin-bottom:12px">Your clicking rhythm was highly consistent. Good peripheral locking.</p>`;
       }
-
-      if (histAvg !== 'N/A') {
-          const timeDiff = (s.time - histAvg).toFixed(2);
-          const comp = timeDiff < 0 ? 'faster' : 'slower';
-          insightsHtml += `<p>Your performance here was <strong>${s.time.toFixed(2)}s</strong>. This is <strong>${Math.abs(timeDiff)}s ${comp}</strong> than your average at the time which was <strong>${histAvg}s</strong>.</p>`;
-      } else {
-          insightsHtml += `<p>This was your first recorded legitimate session for this configuration.</p>`;
-      }
+      if (histAvg !== 'N/A') { const timeDiff = (s.time - histAvg).toFixed(2); insightsHtml += `<p>Your performance here was <strong>${s.time.toFixed(2)}s</strong>. This is <strong>${Math.abs(timeDiff)}s ${timeDiff < 0 ? 'faster' : 'slower'}</strong> than your average at the time which was <strong>${histAvg}s</strong>.</p>`; } 
+      else insightsHtml += `<p>This was your first recorded legitimate session for this configuration.</p>`;
   }
   els.smInsights.innerHTML = insightsHtml;
   
   els.smPauses.innerHTML = '';
   if (s.latencies && s.latencies.length > 0) {
-    let pauses = s.latencies.map((lat, idx) => {
-        const num = s.sequence ? s.sequence[idx] : (idx + 1); 
-        return { num, lat };
-    });
-    pauses.sort((a,b) => b.lat - a.lat);
-    const top5 = pauses.slice(0, 5);
-    
-    els.smPauses.innerHTML = top5.map((p, i) => `
-        <li style="display:flex; justify-content:space-between; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border)">
-          <span>#${i+1} Pause (Searching for <strong>${p.num}</strong>)</span>
-          <span style="color:var(--accent); font-weight:600;">${p.lat.toFixed(2)}s</span>
-        </li>
-    `).join('');
-  } else {
-    els.smPauses.innerHTML = '<li>No pause data recorded for this session.</li>';
-  }
+    let pauses = s.latencies.map((lat, idx) => ({ num: s.sequence ? s.sequence[idx] : (idx + 1), lat })).sort((a,b) => b.lat - a.lat).slice(0, 5);
+    els.smPauses.innerHTML = pauses.map((p, i) => `<li style="display:flex; justify-content:space-between; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border)"><span>#${i+1} Pause (Searching for <strong>${p.num}</strong>)</span><span style="color:var(--accent); font-weight:600;">${p.lat.toFixed(2)}s</span></li>`).join('');
+  } else els.smPauses.innerHTML = '<li>No pause data recorded for this session.</li>';
   
   els.sessionModal.classList.add('visible');
 }
 
 els.sessionModalClose.addEventListener('click', () => els.sessionModal.classList.remove('visible'));
-els.sessionModal.addEventListener('click', (e) => {
-  if (e.target === els.sessionModal) els.sessionModal.classList.remove('visible');
-});
+els.sessionModal.addEventListener('click', (e) => { if (e.target === els.sessionModal) els.sessionModal.classList.remove('visible'); });
 
 els.generateReportBtn.addEventListener('click', () => {
     try {
         const timeFiltered = state.history.filter(h => (h.mode === 'timed' ? h.fullClear : h.completed) && h.legit !== false);
-        if (timeFiltered.length < 10) {
-            els.reportOutput.innerHTML = "Not enough legitimate data to generate a meaningful report. Play at least 10 pure central-focus games.";
-            els.reportModal.classList.add('visible');
-            return;
-        }
-
-        const chronological = timeFiltered.slice().reverse();
+        if (timeFiltered.length < 10) { els.reportOutput.innerHTML = "Not enough legitimate data to generate a meaningful report. Play at least 10 pure central-focus games."; els.reportModal.classList.add('visible'); return; }
+        const chronological = timeFiltered.slice().reverse(), first20PercentIndex = Math.max(5, Math.floor(chronological.length * 0.2)), last20PercentIndex = Math.max(5, Math.floor(chronological.length * 0.2));
+        const firstGames = chronological.slice(0, first20PercentIndex), recentGames = chronological.slice(-last20PercentIndex);
+        const firstAvg = firstGames.reduce((s, h) => s + h.time, 0) / firstGames.length, recentAvg = recentGames.reduce((s, h) => s + h.time, 0) / recentGames.length, improvement = ((firstAvg - recentAvg) / firstAvg) * 100;
         
-        const first20PercentIndex = Math.max(5, Math.floor(chronological.length * 0.2));
-        const last20PercentIndex = Math.max(5, Math.floor(chronological.length * 0.2));
-        
-        const firstGames = chronological.slice(0, first20PercentIndex);
-        const recentGames = chronological.slice(-last20PercentIndex);
-        
-        const firstAvg = firstGames.reduce((s, h) => s + h.time, 0) / firstGames.length;
-        const recentAvg = recentGames.reduce((s, h) => s + h.time, 0) / recentGames.length;
-        const improvement = ((firstAvg - recentAvg) / firstAvg) * 100;
-        
-        const startDate = new Date(chronological[0].ts).toLocaleDateString();
-        const endDate = new Date(chronological[chronological.length-1].ts).toLocaleDateString();
-
-        const report = `PERFORMANCE ANALYSIS REPORT\n===========================\nDate Range: ${startDate} to ${endDate}\nTotal Valid Sessions: ${chronological.length}\n\nPROGRESSION METRICS\n---------------------------\nInitial Baseline (First ${first20PercentIndex} games): ${firstAvg.toFixed(2)}s average\nRecent Baseline (Last ${last20PercentIndex} games): ${recentAvg.toFixed(2)}s average\nOverall Shift: ${Math.abs(improvement).toFixed(1)}% ${improvement > 0 ? 'Faster (Improvement)' : 'Slower (Regression)'}\n\nCONSISTENCY ANALYSIS\n---------------------------\n${generateConsistencyStatement(chronological)}\n\nOBSERVATIONS\n---------------------------\n${improvement > 5 ? "Your peripheral spanning has widened significantly since your first sessions. You are requiring fewer eye fixations to locate targets." : improvement < -5 ? "Your times have regressed. Ensure you aren't rushing, as forcing speed often leads to eye darting, which breaks the training mechanism." : "Your performance has stabilised. To push past this plateau, force yourself to hold the absolute centre even if it slows your times down initially."}`;
-
-        els.reportOutput.innerHTML = report;
-        els.reportModal.classList.add('visible');
-    } catch(e) {
-        console.warn("Report generation failed:", e);
-        els.reportOutput.innerHTML = "An error occurred while generating the report. Need more formatted session data.";
-        els.reportModal.classList.add('visible');
-    }
+        const report = `PERFORMANCE ANALYSIS REPORT\n===========================\nDate Range: ${new Date(chronological[0].ts).toLocaleDateString()} to ${new Date(chronological[chronological.length-1].ts).toLocaleDateString()}\nTotal Valid Sessions: ${chronological.length}\n\nPROGRESSION METRICS\n---------------------------\nInitial Baseline (First ${first20PercentIndex} games): ${firstAvg.toFixed(2)}s average\nRecent Baseline (Last ${last20PercentIndex} games): ${recentAvg.toFixed(2)}s average\nOverall Shift: ${Math.abs(improvement).toFixed(1)}% ${improvement > 0 ? 'Faster (Improvement)' : 'Slower (Regression)'}\n\nCONSISTENCY ANALYSIS\n---------------------------\n${generateConsistencyStatement(chronological)}\n\nOBSERVATIONS\n---------------------------\n${improvement > 5 ? "Your peripheral spanning has widened significantly since your first sessions. You are requiring fewer eye fixations to locate targets." : improvement < -5 ? "Your times have regressed. Ensure you aren't rushing, as forcing speed often leads to eye darting, which breaks the training mechanism." : "Your performance has stabilised. To push past this plateau, force yourself to hold the absolute centre even if it slows your times down initially."}`;
+        els.reportOutput.innerHTML = report; els.reportModal.classList.add('visible');
+    } catch(e) { els.reportOutput.innerHTML = "An error occurred while generating the report. Need more formatted session data."; els.reportModal.classList.add('visible'); }
 });
 
 function generateConsistencyStatement(sessions) {
@@ -2352,319 +1638,126 @@ function generateConsistencyStatement(sessions) {
 }
 
 els.reportModalClose.addEventListener('click', () => els.reportModal.classList.remove('visible'));
-els.reportModal.addEventListener('click', (e) => {
-    if(e.target === els.reportModal) els.reportModal.classList.remove('visible');
-});
+els.reportModal.addEventListener('click', (e) => { if(e.target === els.reportModal) els.reportModal.classList.remove('visible'); });
 
 function renderAnalytics() {
   try {
-      const modeFilter = document.getElementById('analyticsMode').value;
-      const sizeFilter = document.getElementById('analyticsSize').value;
-      
+      const modeFilter = document.getElementById('analyticsMode').value, sizeFilter = document.getElementById('analyticsSize').value;
       let filtered = state.history.filter(h => h.legit !== false);
-      
       if (modeFilter !== 'all') filtered = filtered.filter(h => h.mode === modeFilter);
       if (sizeFilter !== 'all') filtered = filtered.filter(h => h.size === parseInt(sizeFilter));
 
       const timeFiltered = filtered.filter(h => (h.mode === 'timed' ? h.fullClear : h.completed));
       document.getElementById('aTotal').textContent = filtered.length;
 
-      let recentAvg = null, priorAvg = null, change = null;
       if (timeFiltered.length > 0) {
-        const best = Math.min(...timeFiltered.map(h => h.time));
-        const avg = timeFiltered.reduce((s, h) => s + h.time, 0) / timeFiltered.length;
-        document.getElementById('aBest').textContent = best.toFixed(2) + 's';
-        document.getElementById('aAvg').textContent = avg.toFixed(2) + 's';
-      } else {
-        document.getElementById('aBest').textContent = 'N/A';
-        document.getElementById('aAvg').textContent = 'N/A';
-      }
+        document.getElementById('aBest').textContent = Math.min(...timeFiltered.map(h => h.time)).toFixed(2) + 's';
+        document.getElementById('aAvg').textContent = (timeFiltered.reduce((s, h) => s + h.time, 0) / timeFiltered.length).toFixed(2) + 's';
+      } else { document.getElementById('aBest').textContent = 'N/A'; document.getElementById('aAvg').textContent = 'N/A'; }
 
       const chronological = timeFiltered.slice().reverse();
       if (chronological.length >= 4) {
-        const splitPoint = Math.min(5, Math.floor(chronological.length / 2));
-        const recent = chronological.slice(-splitPoint);
-        const prior = chronological.slice(-splitPoint * 2, -splitPoint);
+        const splitPoint = Math.min(5, Math.floor(chronological.length / 2)), recent = chronological.slice(-splitPoint), prior = chronological.slice(-splitPoint * 2, -splitPoint);
         if (prior.length > 0) {
-          recentAvg = recent.reduce((s, h) => s + h.time, 0) / recent.length;
-          priorAvg = prior.reduce((s, h) => s + h.time, 0) / prior.length;
-          change = ((recentAvg - priorAvg) / priorAvg) * 100;
-          const arrow = change < -2 ? '↓' : change > 2 ? '↑' : '→';
-          const color = change < -2 ? 'var(--accent)' : change > 2 ? 'var(--error)' : 'var(--text-dim)';
-          document.getElementById('aTrend').innerHTML = `<span style="color:${color}">${arrow} ${Math.abs(change).toFixed(1)}%</span>`;
+          const recentAvg = recent.reduce((s, h) => s + h.time, 0) / recent.length, priorAvg = prior.reduce((s, h) => s + h.time, 0) / prior.length, change = ((recentAvg - priorAvg) / priorAvg) * 100;
+          document.getElementById('aTrend').innerHTML = `<span style="color:${change < -2 ? 'var(--accent)' : change > 2 ? 'var(--error)' : 'var(--text-dim)'}">${change < -2 ? '↓' : change > 2 ? '↑' : '→'} ${Math.abs(change).toFixed(1)}%</span>`;
           document.getElementById('aTrendSub').textContent = change < 0 ? 'getting faster' : change > 0 ? 'getting slower' : 'steady';
         }
-      } else {
-        document.getElementById('aTrend').textContent = 'N/A';
-        document.getElementById('aTrendSub').textContent = 'need more sessions';
-      }
+      } else { document.getElementById('aTrend').textContent = 'N/A'; document.getElementById('aTrendSub').textContent = 'need more sessions'; }
 
-      renderInsights(filtered, timeFiltered);
-      drawTrendChart(chronological.slice(-30));
-      renderTierBreakdown(filtered);
-      renderTopScores(timeFiltered);
-      renderSessionList(filtered.slice(0, 15));
-  } catch(e) {
-      console.warn("Analytics rendering recovered from error:", e);
-  }
+      renderInsights(filtered, timeFiltered); drawTrendChart(chronological.slice(-30)); renderTierBreakdown(filtered); renderTopScores(timeFiltered); renderSessionList(filtered.slice(0, 15));
+  } catch(e) {}
 }
 
 function renderTopScores(timeFiltered) {
-  const list = document.getElementById('topScoresList');
-  if (!list) return;
-  
-  if (timeFiltered.length === 0) {
-    list.innerHTML = '<li><div class="empty-state">No completed legitimate sessions yet.</div></li>';
-    return;
-  }
-
-  const sorted = [...timeFiltered].sort((a, b) => a.time - b.time);
-  const top5 = sorted.slice(0, 5);
-  const colors = { elite: 'var(--tier-elite)', excellent: 'var(--tier-excellent)', average: 'var(--tier-average)', beginner: 'var(--tier-beginner)' };
-  const modeLabels = { classic: 'Classic', reverse: 'Reverse', alphanumeric: 'Alpha', timed: 'Timed' };
-
-  list.innerHTML = top5.map((s, i) => {
-    const date = new Date(s.ts).toLocaleDateString();
-    return `
-      <li class="session-row" data-ts="${s.ts}">
-        <span class="session-num" style="color:var(--gold); font-weight:bold;">#${i + 1}</span>
-        <span>
-          <span class="tier-dot" style="background:${colors[s.tier] || 'var(--text-faint)'}"></span>
-          ${modeLabels[s.mode] || s.mode} · ${s.size}x${s.size}
-          <div class="session-meta">${date}</div>
-        </span>
-        <span class="session-time" style="color:var(--accent)">${s.time.toFixed(2)}s</span>
-      </li>
-    `;
-  }).join('');
-
-  list.querySelectorAll('.session-row').forEach(row => {
-    row.addEventListener('click', () => openSessionModalByTs(parseInt(row.dataset.ts)));
-  });
+  const list = document.getElementById('topScoresList'); if (!list) return;
+  if (timeFiltered.length === 0) { list.innerHTML = '<li><div class="empty-state">No completed legitimate sessions yet.</div></li>'; return; }
+  const colors = { elite: 'var(--tier-elite)', excellent: 'var(--tier-excellent)', average: 'var(--tier-average)', beginner: 'var(--tier-beginner)' }, modeLabels = { classic: 'Classic', reverse: 'Reverse', alphanumeric: 'Alpha', timed: 'Timed', scrambled: 'Scrambled' };
+  list.innerHTML = [...timeFiltered].sort((a, b) => a.time - b.time).slice(0, 5).map((s, i) => `<li class="session-row" data-ts="${s.ts}"><span class="session-num" style="color:var(--gold); font-weight:bold;">#${i + 1}</span><span><span class="tier-dot" style="background:${colors[s.tier] || 'var(--text-faint)'}"></span> ${modeLabels[s.mode] || s.mode} · ${s.size}x${s.size}<div class="session-meta">${new Date(s.ts).toLocaleDateString()}</div></span><span class="session-time" style="color:var(--accent)">${s.time.toFixed(2)}s</span></li>`).join('');
+  list.querySelectorAll('.session-row').forEach(row => row.addEventListener('click', () => openSessionModalByTs(parseInt(row.dataset.ts))));
 }
 
 function renderInsights(filtered, timeFiltered) {
-  const container = document.getElementById('insightContainer');
-  if (!container) return;
-  
+  const container = document.getElementById('insightContainer'); if (!container) return;
   const insights = [];
-
-  if (filtered.length === 0) {
-    container.innerHTML = `<div class="insight-card neutral"><div class="insight-title">No data yet</div><div class="insight-body">Play some games to start seeing insights about your progress.</div></div>`;
-    return;
-  }
+  if (filtered.length === 0) { container.innerHTML = `<div class="insight-card neutral"><div class="insight-title">No data yet</div><div class="insight-body">Play some games to start seeing insights about your progress.</div></div>`; return; }
 
   if (timeFiltered.length > 0) {
-    const latest = timeFiltered[0];
-    const previousRuns = timeFiltered.slice(1);
-
-    if (previousRuns.length === 0) {
-      insights.push({ type: 'neutral', title: 'Baseline Established', body: 'First run on record for this configuration. Focus on accuracy over speed for now.' });
-    } else {
-      const histAvg = previousRuns.reduce((s, h) => s + h.time, 0) / previousRuns.length;
-      const diff = histAvg - latest.time;
-      const pctChange = Math.abs((diff / histAvg) * 100).toFixed(1);
-
-      if (diff > 0) {
-         insights.push({ type: 'achievement', title: 'Fantastic Job!', body: `You outperformed your historical average by ${pctChange}%. Keep locking that central focus.` });
-      } else {
-         insights.push({ type: 'warning', title: 'Slight Regression', body: `A bit slower this time, trailing your average by ${pctChange}%. Ensure you aren't manually scanning the grid.` });
-      }
+    const latest = timeFiltered[0], previousRuns = timeFiltered.slice(1);
+    if (previousRuns.length === 0) insights.push({ type: 'neutral', title: 'Baseline Established', body: 'First run on record for this configuration. Focus on accuracy over speed for now.' });
+    else {
+      const histAvg = previousRuns.reduce((s, h) => s + h.time, 0) / previousRuns.length, pctChange = Math.abs(((histAvg - latest.time) / histAvg) * 100).toFixed(1);
+      if ((histAvg - latest.time) > 0) insights.push({ type: 'achievement', title: 'Fantastic Job!', body: `You outperformed your historical average by ${pctChange}%. Keep locking that central focus.` });
+      else insights.push({ type: 'warning', title: 'Slight Regression', body: `A bit slower this time, trailing your average by ${pctChange}%. Ensure you aren't manually scanning the grid.` });
     }
-
     if (latest.latencies && latest.latencies.length > 0) {
-      const maxDelay = Math.max(...latest.latencies);
-      const avgDelay = latest.time / latest.latencies.length;
-      if (maxDelay > avgDelay * 2.5 && maxDelay > 2.0 && latest.tier !== 'elite') {
-         insights.push({
-          type: 'achievement',
-          title: 'Impressive Discipline',
-          body: `You had a long pause of <strong>${maxDelay.toFixed(1)}s</strong> at one point, but you maintained your central focus. Many people shift their eyes to manually scan when stuck. Excellent peripheral lock.`
-        });
-      }
+      const maxDelay = Math.max(...latest.latencies), avgDelay = latest.time / latest.latencies.length;
+      if (maxDelay > avgDelay * 2.5 && maxDelay > 2.0 && latest.tier !== 'elite') insights.push({ type: 'achievement', title: 'Impressive Discipline', body: `You had a long pause of <strong>${maxDelay.toFixed(1)}s</strong> at one point, but you maintained your central focus. Many people shift their eyes to manually scan when stuck. Excellent peripheral lock.` });
     }
   }
 
   if (timeFiltered.length >= 5) {
     const avgErrors = filtered.reduce((s, h) => s + (h.errors || 0), 0) / filtered.length;
-    if (avgErrors > 2) {
-      insights.push({
-        type: 'warning',
-        title: `Average ${avgErrors.toFixed(1)} misclicks per run`,
-        body: `Errors usually mean you are skimming the grid rather than reading it. Slow down slightly. Times follow accuracy, not the other way around.`,
-      });
-    } else if (avgErrors < 0.3 && timeFiltered.length >= 10) {
-      insights.push({
-        type: 'achievement',
-        title: 'Near-zero error rate',
-        body: `Across ${timeFiltered.length} runs you average ${avgErrors.toFixed(2)} errors. That is the hallmark of clean visual tracking, not just fast reflexes.`,
-      });
-    }
+    if (avgErrors > 2) insights.push({ type: 'warning', title: `Average ${avgErrors.toFixed(1)} misclicks per run`, body: `Errors usually mean you are skimming the grid rather than reading it. Slow down slightly. Times follow accuracy, not the other way around.` });
+    else if (avgErrors < 0.3 && timeFiltered.length >= 10) insights.push({ type: 'achievement', title: 'Near-zero error rate', body: `Across ${timeFiltered.length} runs you average ${avgErrors.toFixed(2)} errors. That is the hallmark of clean visual tracking, not just fast reflexes.` });
   }
 
-  if (insights.length === 0) {
-    insights.push({ type: 'neutral', title: 'Keep going', body: 'A few more sessions and meaningful trends will start showing here.' });
-  }
-
+  if (insights.length === 0) insights.push({ type: 'neutral', title: 'Keep going', body: 'A few more sessions and meaningful trends will start showing here.' });
   const typeMap = { achievement: 'achievement', warning: 'warning', neutral: 'neutral', danger: 'danger' };
-  container.innerHTML = insights.map(i => `
-    <div class="insight-card ${typeMap[i.type]}">
-      <div class="insight-title">${i.title}</div>
-      <div class="insight-body">${i.body}</div>
-    </div>
-  `).join('');
+  container.innerHTML = insights.map(i => `<div class="insight-card ${typeMap[i.type]}"><div class="insight-title">${i.title}</div><div class="insight-body">${i.body}</div></div>`).join('');
 }
 
 function drawTrendChart(sessions) {
-  const canvas = document.getElementById('trendChart');
-  if (!canvas) return;
-  
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.parentElement.getBoundingClientRect();
-  
-  if (rect.width === 0) return;
-  
-  canvas.width = rect.width * dpr;
-  canvas.height = 180 * dpr;
-  canvas.style.width = rect.width + 'px';
-  canvas.style.height = '180px';
-  const ctx = canvas.getContext('2d');
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, rect.width, 180);
+  const canvas = document.getElementById('trendChart'); if (!canvas) return;
+  const dpr = window.devicePixelRatio || 1, rect = canvas.parentElement.getBoundingClientRect(); if (rect.width === 0) return;
+  canvas.width = rect.width * dpr; canvas.height = 180 * dpr; canvas.style.width = rect.width + 'px'; canvas.style.height = '180px';
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr); ctx.clearRect(0, 0, rect.width, 180);
+  const cs = getComputedStyle(document.body), textFaint = cs.getPropertyValue('--text-faint').trim() || '#888';
 
-  const cs = getComputedStyle(document.body);
-  const accentColor = cs.getPropertyValue('--accent').trim();
-  const borderColor = cs.getPropertyValue('--border').trim();
-  const textFaint = cs.getPropertyValue('--text-faint').trim() || '#888';
-  const bgColor = cs.getPropertyValue('--bg').trim();
+  if (sessions.length < 2) { ctx.fillStyle = textFaint; ctx.font = '12px ui-monospace, monospace'; ctx.textAlign = 'center'; ctx.fillText('Not enough data yet', rect.width / 2, 90); return; }
 
-  if (sessions.length < 2) {
-    ctx.fillStyle = textFaint;
-    ctx.font = '12px ui-monospace, monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('Not enough data yet', rect.width / 2, 90);
-    return;
-  }
+  const padding = { top: 16, right: 16, bottom: 24, left: 36 }, w = rect.width - padding.left - padding.right, h = 180 - padding.top - padding.bottom;
+  const times = sessions.map(s => s.time), min = Math.min(...times), max = Math.max(...times), range = max - min || 1;
+  const accentColor = cs.getPropertyValue('--accent').trim(), borderColor = cs.getPropertyValue('--border').trim(), bgColor = cs.getPropertyValue('--bg').trim();
 
-  const padding = { top: 16, right: 16, bottom: 24, left: 36 };
-  const w = rect.width - padding.left - padding.right;
-  const h = 180 - padding.top - padding.bottom;
-  const times = sessions.map(s => s.time);
-  const min = Math.min(...times);
-  const max = Math.max(...times);
-  const range = max - min || 1;
-
-  ctx.strokeStyle = borderColor;
-  ctx.lineWidth = 1;
+  ctx.strokeStyle = borderColor; ctx.lineWidth = 1;
   for (let i = 0; i <= 3; i++) {
-    const y = padding.top + (h / 3) * i;
-    ctx.beginPath();
-    ctx.moveTo(padding.left, y);
-    ctx.lineTo(padding.left + w, y);
-    ctx.stroke();
-    ctx.fillStyle = textFaint;
-    ctx.font = '10px ui-monospace, monospace';
-    ctx.textAlign = 'right';
-    ctx.fillText((max - (range / 3) * i).toFixed(1) + 's', padding.left - 6, y + 3);
+    const y = padding.top + (h / 3) * i; ctx.beginPath(); ctx.moveTo(padding.left, y); ctx.lineTo(padding.left + w, y); ctx.stroke();
+    ctx.fillStyle = textFaint; ctx.font = '10px ui-monospace, monospace'; ctx.textAlign = 'right'; ctx.fillText((max - (range / 3) * i).toFixed(1) + 's', padding.left - 6, y + 3);
   }
 
-  ctx.strokeStyle = accentColor;
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  sessions.forEach((s, i) => {
-    const x = padding.left + (w / (sessions.length - 1)) * i;
-    const y = padding.top + h - ((s.time - min) / range) * h;
-    if (i === 0) ctx.moveTo(x, y);
-    else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
-
-  sessions.forEach((s, i) => {
-    const x = padding.left + (w / (sessions.length - 1)) * i;
-    const y = padding.top + h - ((s.time - min) / range) * h;
-    ctx.fillStyle = bgColor;
-    ctx.beginPath();
-    ctx.arc(x, y, 3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = accentColor;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  });
+  ctx.strokeStyle = accentColor; ctx.lineWidth = 2; ctx.beginPath();
+  sessions.forEach((s, i) => { const x = padding.left + (w / (sessions.length - 1)) * i, y = padding.top + h - ((s.time - min) / range) * h; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }); ctx.stroke();
+  sessions.forEach((s, i) => { const x = padding.left + (w / (sessions.length - 1)) * i, y = padding.top + h - ((s.time - min) / range) * h; ctx.fillStyle = bgColor; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = accentColor; ctx.lineWidth = 2; ctx.stroke(); });
 }
 
 function renderTierBreakdown(sessions) {
-  const container = document.getElementById('tierBreakdown');
-  if(!container) return;
-  const counts = { elite: 0, excellent: 0, average: 0, beginner: 0 };
+  const container = document.getElementById('tierBreakdown'); if(!container) return;
+  const counts = { elite: 0, excellent: 0, average: 0, beginner: 0 }, total = sessions.length || 1, colors = { elite: 'var(--tier-elite)', excellent: 'var(--tier-excellent)', average: 'var(--tier-average)', beginner: 'var(--tier-beginner)' };
   sessions.forEach(s => { if (s.tier && counts[s.tier] !== undefined) counts[s.tier]++; });
-  const total = sessions.length || 1;
-  const colors = { elite: 'var(--tier-elite)', excellent: 'var(--tier-excellent)', average: 'var(--tier-average)', beginner: 'var(--tier-beginner)' };
-  let html = '';
-  ['elite', 'excellent', 'average', 'beginner'].forEach(tier => {
+  container.innerHTML = ['elite', 'excellent', 'average', 'beginner'].map(tier => {
     const pct = (counts[tier] / total) * 100;
-    html += `
-      <div style="margin-bottom:14px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
-          <span style="display:flex;align-items:center;gap:8px"><span class="tier-dot" style="background:${colors[tier]}"></span>${TIER_LABELS[tier]}</span>
-          <span style="color:var(--text-dim)">${counts[tier]} (${pct.toFixed(0)}%)</span>
-        </div>
-        <div style="height:4px;background:var(--bg-cell);border-radius:2px;overflow:hidden">
-          <div style="height:100%;width:${pct}%;background:${colors[tier]};border-radius:2px"></div>
-        </div>
-      </div>
-    `;
-  });
-  container.innerHTML = html || '<div class="empty-state">No data yet</div>';
+    return `<div style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="display:flex;align-items:center;gap:8px"><span class="tier-dot" style="background:${colors[tier]}"></span>${TIER_LABELS[tier]}</span><span style="color:var(--text-dim)">${counts[tier]} (${pct.toFixed(0)}%)</span></div><div style="height:4px;background:var(--bg-cell);border-radius:2px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${colors[tier]};border-radius:2px"></div></div></div>`;
+  }).join('') || '<div class="empty-state">No data yet</div>';
 }
 
 function renderSessionList(sessions) {
-  const list = document.getElementById('sessionList');
-  if (!list) return;
-  if (sessions.length === 0) {
-    list.innerHTML = '<li><div class="empty-state" style="grid-column:1/-1">No sessions yet. Play a game.</div></li>';
-    return;
-  }
-  const colors = { elite: 'var(--tier-elite)', excellent: 'var(--tier-excellent)', average: 'var(--tier-average)', beginner: 'var(--tier-beginner)' };
-  const modeLabels = { classic: 'Classic', reverse: 'Reverse', alphanumeric: 'Alpha', timed: 'Timed' };
+  const list = document.getElementById('sessionList'); if (!list) return;
+  if (sessions.length === 0) { list.innerHTML = '<li><div class="empty-state" style="grid-column:1/-1">No sessions yet. Play a game.</div></li>'; return; }
+  const colors = { elite: 'var(--tier-elite)', excellent: 'var(--tier-excellent)', average: 'var(--tier-average)', beginner: 'var(--tier-beginner)' }, modeLabels = { classic: 'Classic', reverse: 'Reverse', alphanumeric: 'Alpha', timed: 'Timed', scrambled: 'Scrambled' };
   
   list.innerHTML = sessions.map((s, i) => {
-    const date = new Date(s.ts);
-    const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    let timeText = (s.mode === 'timed' && !s.fullClear) ? `${s.numbersReached}/${s.totalNumbers}` : s.time.toFixed(2) + 's';
-    
-    let diffMarker = '';
-    if (s.diffMultiplier > 3) diffMarker = ' <span style="color:var(--tier-elite)" title="Hard/Scattered Board">▲</span>';
-    else if (s.diffMultiplier < 3) diffMarker = ' <span style="color:var(--tier-beginner)" title="Easy/Clustered Board">▼</span>';
-
-    const recordBadge = s.isRecord ? '<span style="color:var(--gold);margin-left:6px">★</span>' : '';
-    
-    return `
-      <li class="session-row" data-ts="${s.ts}">
-        <span class="session-num">#${i + 1}</span>
-        <span>
-          <span class="tier-dot" style="background:${colors[s.tier] || 'var(--text-faint)'}"></span>
-          ${modeLabels[s.mode] || s.mode} · ${s.size}x${s.size}${diffMarker}${recordBadge}
-          <div class="session-meta">${dateStr}${s.errors ? ' · ' + s.errors + ' err' : ''}</div>
-        </span>
-        <span class="session-time">${timeText}</span>
-        <span style="color:var(--accent);font-size:12px">+${s.exp}</span>
-      </li>
-    `;
+    let diffMarker = s.diffMultiplier > 3 ? ' <span style="color:var(--tier-elite)" title="Hard/Scattered Board">▲</span>' : s.diffMultiplier < 3 ? ' <span style="color:var(--tier-beginner)" title="Easy/Clustered Board">▼</span>' : '';
+    return `<li class="session-row" data-ts="${s.ts}"><span class="session-num">#${i + 1}</span><span><span class="tier-dot" style="background:${colors[s.tier] || 'var(--text-faint)'}"></span> ${modeLabels[s.mode] || s.mode} · ${s.size}x${s.size}${diffMarker}${s.isRecord ? '<span style="color:var(--gold);margin-left:6px">★</span>' : ''}<div class="session-meta">${new Date(s.ts).toLocaleDateString() + ' ' + new Date(s.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}${s.errors ? ' · ' + s.errors + ' err' : ''}</div></span><span class="session-time">${(s.mode === 'timed' && !s.fullClear) ? `${s.numbersReached}/${s.totalNumbers}` : s.time.toFixed(2) + 's'}</span><span style="color:var(--accent);font-size:12px">+${s.exp}</span></li>`;
   }).join('');
-
-  list.querySelectorAll('.session-row').forEach(row => {
-    row.addEventListener('click', () => openSessionModalByTs(parseInt(row.dataset.ts)));
-  });
+  list.querySelectorAll('.session-row').forEach(row => row.addEventListener('click', () => openSessionModalByTs(parseInt(row.dataset.ts))));
 }
 
 /* ============================ EVENTS ============================ */
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('view-' + tab.dataset.tab).classList.add('active');
-    
+    document.querySelectorAll('.tab, .view').forEach(el => el.classList.remove('active'));
+    tab.classList.add('active'); document.getElementById('view-' + tab.dataset.tab).classList.add('active');
     if (tab.dataset.tab === 'analytics') setTimeout(renderAnalytics, 10);
     if (tab.dataset.tab === 'character') updateLevelDisplay();
     if (tab.dataset.tab === 'rewards') renderRewardsTab();
@@ -2672,160 +1765,70 @@ document.querySelectorAll('.tab').forEach(tab => {
 });
 
 function setTheme(theme) {
-  state.theme = theme;
-  document.body.dataset.theme = theme;
-  document.querySelectorAll('.theme-btn').forEach(b => {
-    b.classList.toggle('active', b.dataset.theme === theme);
-  });
-  
-  saveState();
-  updateLevelDisplay();
-  if (document.getElementById('view-analytics').classList.contains('active')) setTimeout(renderAnalytics, 10);
+  state.theme = theme; document.body.dataset.theme = theme;
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === theme));
+  saveState(); updateLevelDisplay(); if (document.getElementById('view-analytics').classList.contains('active')) setTimeout(renderAnalytics, 10);
 }
-
-document.querySelectorAll('.theme-btn').forEach(b => {
-  if(!b.id || !b.id.includes('orb')) b.addEventListener('click', () => setTheme(b.dataset.theme));
-});
+document.querySelectorAll('.theme-btn').forEach(b => { if(!b.id || !b.id.includes('orb')) b.addEventListener('click', () => setTheme(b.dataset.theme)); });
 
 els.newGameBtn.addEventListener('click', () => { els.resultCard.classList.remove('visible'); buildBoard(true); });
 els.restartBtn.addEventListener('click', () => { els.resultCard.classList.remove('visible'); buildBoard(false); });
 els.focusRestartBtn.addEventListener('click', () => { els.resultCard.classList.remove('visible'); buildBoard(false); });
 els.focusNewBtn.addEventListener('click', () => { els.resultCard.classList.remove('visible'); buildBoard(true); });
+els.modeSelect.addEventListener('change', () => { els.timedLimitGroup.style.display = els.modeSelect.value === 'timed' ? 'flex' : 'none'; buildBoard(true); });
+els.sizeSelect.addEventListener('change', () => buildBoard(true)); els.timeLimitSelect.addEventListener('change', () => buildBoard(true));
 
-els.modeSelect.addEventListener('change', () => {
-  els.timedLimitGroup.style.display = els.modeSelect.value === 'timed' ? 'flex' : 'none';
-  buildBoard(true);
-});
-els.sizeSelect.addEventListener('change', () => buildBoard(true));
-els.timeLimitSelect.addEventListener('change', () => buildBoard(true));
-
-document.getElementById('analyticsMode').addEventListener('change', renderAnalytics);
-document.getElementById('analyticsSize').addEventListener('change', renderAnalytics);
-
+document.getElementById('analyticsMode').addEventListener('change', renderAnalytics); document.getElementById('analyticsSize').addEventListener('change', renderAnalytics);
 document.getElementById('clearBtn').addEventListener('click', () => {
   if (confirm('This will wipe ALL session history, reset XP to 0, lock all unlocked items, and clear any custom colours. This cannot be undone. Continue?')) {
-    state.history = []; state.totalExp = 0; state.itemColours = {};
-    state.equipped = { headwear: null, face: null, clothing: null, aura: null, effect: null };
-    state.unseenUnlocks = []; state.unseenToys = [];
+    state.history = []; state.totalExp = 0; state.itemColours = {}; state.equipped = { headwear: null, face: null, clothing: null, aura: null, effect: null }; state.unseenUnlocks = []; state.unseenToys = [];
     saveState(); updateLevelDisplay(); renderAnalytics(); updateBestDisplay();
   }
 });
 
-function toggleGender() {
-  state.gender = state.gender === 'M' ? 'F' : 'M';
-  saveState(); updateLevelDisplay();
-}
-els.genderToggleLarge.addEventListener('click', toggleGender);
-els.characterFrame.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.querySelector('.tab[data-tab="character"]').classList.add('active');
-    document.getElementById('view-character').classList.add('active');
-    updateLevelDisplay();
-});
-
+els.genderToggleLarge.addEventListener('click', () => { state.gender = state.gender === 'M' ? 'F' : 'M'; saveState(); updateLevelDisplay(); });
+els.characterFrame.addEventListener('click', () => { document.querySelectorAll('.tab, .view').forEach(el => el.classList.remove('active')); document.querySelector('.tab[data-tab="character"]').classList.add('active'); document.getElementById('view-character').classList.add('active'); updateLevelDisplay(); });
 els.visionCheat.addEventListener('click', (e) => {
-  e.stopPropagation();
-  const currentParams = levelFromExp(state.totalExp);
-  if (currentParams.level < MAX_LEVEL) {
-      state.totalExp += currentParams.neededForNext - currentParams.currentInLevel;
-      saveState(); updateLevelDisplay();
-      
-      const newLevel = currentParams.level + 1;
-      const newUnlocks = UNLOCKS.filter(u => u.level === newLevel);
-      if (newUnlocks.length > 0) showLevelupToast(`Level ${newLevel} reached`, `Unlocked: ${newUnlocks[newUnlocks.length - 1].name}`);
-      else showLevelupToast(`Level ${newLevel} reached`, getTierName(newLevel));
+  e.stopPropagation(); const p = levelFromExp(state.totalExp);
+  if (p.level < MAX_LEVEL) {
+      state.totalExp += p.neededForNext - p.currentInLevel; saveState(); updateLevelDisplay();
+      const newLvl = p.level + 1, unl = UNLOCKS.filter(u => u.level === newLvl);
+      if (unl.length > 0) showLevelupToast(`Level ${newLvl} reached`, `Unlocked: ${unl[unl.length - 1].name}`); else showLevelupToast(`Level ${newLvl} reached`, getTierName(newLvl));
   }
 });
 
 /* --- Focus Drag & Scale Logic --- */
-let fX = 0, fY = 0, fScale = 1;
-let isFDragging = false, dragStartX = 0, dragStartY = 0;
-let focusDragMode = false;
+let fX = 0, fY = 0, fScale = 1, isFDragging = false, dragStartX = 0, dragStartY = 0, focusDragMode = false;
 
 function updateFocusTransform() {
     els.focusTransformContainer.style.transform = `translate(${fX}px, ${fY}px) scale(${fScale})`;
-    if (fX !== 0 || fY !== 0 || fScale !== 1) {
-        els.focusResetPosBtn.style.display = 'flex';
-    } else {
-        els.focusResetPosBtn.style.display = 'none';
-    }
+    els.focusResetPosBtn.style.display = (fX !== 0 || fY !== 0 || fScale !== 1) ? 'flex' : 'none';
 }
 
 els.focusZoomInBtn.addEventListener('click', () => { fScale = Math.min(fScale + 0.15, 3.5); updateFocusTransform(); });
 els.focusZoomOutBtn.addEventListener('click', () => { fScale = Math.max(fScale - 0.15, 0.4); updateFocusTransform(); });
-
 els.focusResetPosBtn.addEventListener('click', () => {
-    fX = 0; fY = 0; fScale = 1;
-    updateFocusTransform();
-    if(focusDragMode) {
-        focusDragMode = false;
-        els.focusDragBtn.classList.remove('active-toggle');
-        document.body.classList.remove('focus-drag-mode');
-    }
+    fX = 0; fY = 0; fScale = 1; updateFocusTransform();
+    if(focusDragMode) { focusDragMode = false; els.focusDragBtn.classList.remove('active-toggle'); document.body.classList.remove('focus-drag-mode'); }
 });
 
-els.focusDragBtn.addEventListener('click', () => {
-    focusDragMode = !focusDragMode;
-    els.focusDragBtn.classList.toggle('active-toggle', focusDragMode);
-    document.body.classList.toggle('focus-drag-mode', focusDragMode);
-});
+els.focusDragBtn.addEventListener('click', () => { focusDragMode = !focusDragMode; els.focusDragBtn.classList.toggle('active-toggle', focusDragMode); document.body.classList.toggle('focus-drag-mode', focusDragMode); });
 
-els.boardWrap.addEventListener('mousedown', (e) => {
-    if (!focusDragMode || !state.focus) return;
-    isFDragging = true;
-    els.focusTransformContainer.style.transition = 'none';
-    dragStartX = e.clientX - fX;
-    dragStartY = e.clientY - fY;
-});
-
-window.addEventListener('mousemove', (e) => {
-    if (!isFDragging) return;
-    fX = e.clientX - dragStartX;
-    fY = e.clientY - dragStartY;
-    els.focusTransformContainer.style.transform = `translate(${fX}px, ${fY}px) scale(${fScale})`;
-});
-
-window.addEventListener('mouseup', () => {
-    if (isFDragging) {
-        isFDragging = false;
-        els.focusTransformContainer.style.transition = 'transform 0.1s ease-out';
-    }
-});
+els.boardWrap.addEventListener('mousedown', (e) => { if (!focusDragMode || !state.focus) return; isFDragging = true; els.focusTransformContainer.style.transition = 'none'; dragStartX = e.clientX - fX; dragStartY = e.clientY - fY; });
+window.addEventListener('mousemove', (e) => { if (!isFDragging) return; fX = e.clientX - dragStartX; fY = e.clientY - dragStartY; els.focusTransformContainer.style.transform = `translate(${fX}px, ${fY}px) scale(${fScale})`; });
+window.addEventListener('mouseup', () => { if (isFDragging) { isFDragging = false; els.focusTransformContainer.style.transition = 'transform 0.1s ease-out'; } });
 
 function toggleFocusMode(force) {
   state.focus = (force !== undefined) ? force : !state.focus;
   document.body.classList.toggle('focus', state.focus);
-  
-  if (state.focus) {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.querySelector('.tab[data-tab="play"]').classList.add('active');
-    document.getElementById('view-play').classList.add('active');
-  } else {
-    // Reset drag and scale when exiting
-    fX = 0; fY = 0; fScale = 1;
-    updateFocusTransform();
-    if(focusDragMode) {
-        focusDragMode = false;
-        els.focusDragBtn.classList.remove('active-toggle');
-        document.body.classList.remove('focus-drag-mode');
-    }
-  }
+  if (state.focus) { document.querySelectorAll('.tab, .view').forEach(el => el.classList.remove('active')); document.querySelector('.tab[data-tab="play"]').classList.add('active'); document.getElementById('view-play').classList.add('active'); } 
+  else { fX = 0; fY = 0; fScale = 1; updateFocusTransform(); if(focusDragMode) { focusDragMode = false; els.focusDragBtn.classList.remove('active-toggle'); document.body.classList.remove('focus-drag-mode'); } }
 }
 
-els.focusBtn.addEventListener('click', () => toggleFocusMode(true));
-els.focusExitBtn.addEventListener('click', () => toggleFocusMode(false));
+els.focusBtn.addEventListener('click', () => toggleFocusMode(true)); els.focusExitBtn.addEventListener('click', () => toggleFocusMode(false));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.focus && !els.sessionModal.classList.contains('visible') && !els.legitModal.classList.contains('visible')) toggleFocusMode(false); });
 
-document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && state.focus && !els.sessionModal.classList.contains('visible') && !els.legitModal.classList.contains('visible')) {
-    toggleFocusMode(false);
-  }
-});
-
-(function init() {
-  loadState(); updateZoom(state.zoom); setTheme(state.theme); updateLevelDisplay(); buildBoard(true);
-})();
+(function init() { loadState(); updateZoom(state.zoom); setTheme(state.theme); updateLevelDisplay(); buildBoard(true); })();
 </script>
 </body>
 </html>
