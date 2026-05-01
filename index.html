@@ -85,6 +85,7 @@
 
   .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); gap: 24px; }
   .header-left { display: flex; align-items: center; gap: 20px; }
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 16px; }
 
   .character-frame {
     width: 88px; height: 110px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 10px;
@@ -105,6 +106,18 @@
   .brand-sub { font-size: 11px; color: var(--text-faint); letter-spacing: 0.08em; text-transform: uppercase; }
   .brand-sub .vision-cheat { cursor: pointer; user-select: none; color: inherit; }
 
+  /* Utility Top Bar (Theme & Zoom) */
+  .top-utilities { display: flex; gap: 12px; align-items: center; }
+  .theme-switcher { display: flex; gap: 4px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; padding: 3px; }
+  .theme-btn { width: 28px; height: 28px; border: none; background: transparent; cursor: pointer; border-radius: 4px; font-size: 14px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); transition: background 0.15s, color 0.15s; }
+  .theme-btn:hover { color: var(--text); }
+  .theme-btn.active { background: var(--bg-cell); color: var(--text); }
+
+  .zoom-controls { display: flex; gap: 4px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; padding: 3px 6px; align-items: center; }
+  .zoom-btn { width: 24px; height: 24px; border: none; background: transparent; cursor: pointer; border-radius: 4px; font-size: 16px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); transition: color 0.15s; font-family: monospace; }
+  .zoom-btn:hover { color: var(--text); }
+  .zoom-label { font-size: 11px; color: var(--text-faint); width: 36px; text-align: center; font-family: 'Space Grotesk', sans-serif; font-weight: 600; }
+
   .level-block { text-align: right; min-width: 220px; }
   .level-label { font-size: 11px; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
   .level-value { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 36px; font-weight: 700; color: var(--accent); line-height: 1; }
@@ -117,11 +130,6 @@
   .exp-bar-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent); animation: shimmer 2.5s linear infinite; }
   @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
   .exp-text { font-size: 10px; color: var(--text-faint); margin-top: 4px; text-align: right; }
-
-  .theme-switcher { display: flex; gap: 4px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; padding: 3px; }
-  .theme-btn { width: 28px; height: 28px; border: none; background: transparent; cursor: pointer; border-radius: 4px; font-size: 14px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); transition: background 0.15s, color 0.15s; }
-  .theme-btn:hover { color: var(--text); }
-  .theme-btn.active { background: var(--bg-cell); color: var(--text); }
 
   .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
   .tabs::-webkit-scrollbar { display: none; }
@@ -421,7 +429,20 @@
       </div>
     </div>
 
-    <div style="display:flex;align-items:center;gap:16px">
+    <div class="header-right">
+      <div class="top-utilities">
+        <div class="theme-switcher">
+          <button class="theme-btn" data-theme="dark" title="Dark Mode">🌙</button>
+          <button class="theme-btn" data-theme="light" title="Light Mode">☀️</button>
+          <button class="theme-btn" data-theme="sepia" title="Reading Mode">📖</button>
+        </div>
+        <div class="zoom-controls">
+          <button class="zoom-btn" id="zoomOutBtn" title="Zoom Out">-</button>
+          <span class="zoom-label" id="zoomLabel">100%</span>
+          <button class="zoom-btn" id="zoomInBtn" title="Zoom In">+</button>
+        </div>
+      </div>
+      
       <div class="level-block">
         <div class="level-label">Level</div>
         <div class="level-value" id="levelDisplay">1</div>
@@ -1111,12 +1132,12 @@ function buildCharacterSvg(level, gender) {
 }
 
 /* ============================ STATE & STORAGE ============================ */
-const STORAGE_KEY = 'schulte_state_v16';
+const STORAGE_KEY = 'schulte_state_v17';
 
 const state = {
   size: 5, mode: 'classic', timeLimit: 60,
   sequence: [], boardValues: [], currentIndex: 0, isPlaying: false, isGameOver: false, startTime: 0, errors: 0,
-  timerInterval: null, countdownInterval: null, history: [], totalExp: 0, gender: 'M', theme: 'dark',
+  timerInterval: null, countdownInterval: null, history: [], totalExp: 0, gender: 'M', theme: 'dark', zoom: 1,
   baseColours: { skinColour: '#d4a574', hairColour: '#3d2817', baseShirt: '#e6eaf2' },
   baseStyles: { hair: 0 },
   equipped: { headwear: null, face: null, clothing: null, aura: null, effect: null },
@@ -1128,7 +1149,7 @@ function loadState() {
   try {
     let raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
-      const legacy = localStorage.getItem('schulte_state_v15') || localStorage.getItem('schulte_state_v14') || localStorage.getItem('schulte_state_v13');
+      const legacy = localStorage.getItem('schulte_state_v16') || localStorage.getItem('schulte_state_v15');
       if (legacy) raw = legacy;
     }
     if (raw) {
@@ -1137,6 +1158,7 @@ function loadState() {
       state.totalExp    = parsed.totalExp    || 0;
       state.gender      = parsed.gender      || 'M';
       state.theme       = parsed.theme       || 'dark';
+      state.zoom        = parsed.zoom        || 1;
       state.baseColours = parsed.baseColours || { skinColour: '#d4a574', hairColour: '#3d2817', baseShirt: '#e6eaf2' };
       state.baseStyles  = parsed.baseStyles  || { hair: 0 };
       state.itemColours = parsed.itemColours || {};
@@ -1153,7 +1175,7 @@ function loadState() {
 function saveState() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      history: state.history, totalExp: state.totalExp, gender: state.gender, theme: state.theme,
+      history: state.history, totalExp: state.totalExp, gender: state.gender, theme: state.theme, zoom: state.zoom,
       baseColours: state.baseColours, baseStyles: state.baseStyles, itemColours: state.itemColours,
       equipped: state.equipped, unseenUnlocks: state.unseenUnlocks, unseenToys: state.unseenToys
     }));
@@ -1254,8 +1276,20 @@ const els = {
   smInsights: document.getElementById('smInsights'), legitModal: document.getElementById('legitModal'),
   legitYesBtn: document.getElementById('legitYesBtn'), legitNoBtn: document.getElementById('legitNoBtn'),
   reportModal: document.getElementById('reportModal'), reportOutput: document.getElementById('reportOutput'),
-  generateReportBtn: document.getElementById('generateReportBtn'), reportModalClose: document.getElementById('reportModalClose')
+  generateReportBtn: document.getElementById('generateReportBtn'), reportModalClose: document.getElementById('reportModalClose'),
+  zoomInBtn: document.getElementById('zoomInBtn'), zoomOutBtn: document.getElementById('zoomOutBtn'), zoomLabel: document.getElementById('zoomLabel')
 };
+
+/* ============================ ZOOM / SCALE CONTROLS ============================ */
+function updateZoom(newZoom) {
+    state.zoom = Math.max(0.5, Math.min(newZoom, 2.5));
+    document.body.style.zoom = state.zoom;
+    els.zoomLabel.textContent = Math.round(state.zoom * 100) + '%';
+    saveState();
+}
+
+els.zoomInBtn.addEventListener('click', () => updateZoom(state.zoom + 0.1));
+els.zoomOutBtn.addEventListener('click', () => updateZoom(state.zoom - 0.1));
 
 /* ============================ TOYBOX INTERACTIVES ============================ */
 
@@ -2607,7 +2641,7 @@ document.addEventListener('keydown', (e) => {
 });
 
 (function init() {
-  loadState(); setTheme(state.theme); updateLevelDisplay(); buildBoard(true);
+  loadState(); updateZoom(state.zoom); setTheme(state.theme); updateLevelDisplay(); buildBoard(true);
 })();
 </script>
 </body>
