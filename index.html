@@ -1,0 +1,2614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Card's Gamified Schulte Table</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔢</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  /* ============ THEMES ============ */
+  :root, [data-theme="dark"] {
+    --bg: #0a0d14; --bg-elevated: #12161f; --bg-cell: #1a1f2c; --bg-cell-center: #232a3b; --bg-cell-hover: #20273a;
+    --border: #252b3a; --border-strong: #344056; --text: #e6eaf2; --text-dim: #8a93a6; --text-faint: #5a6275;
+    --accent: #4ade80; --accent-dim: #22c55e; --accent-text: #04130a; --error: #f87171; --gold: #fbbf24;
+    --tier-elite: #a78bfa; --tier-excellent: #4ade80; --tier-average: #fbbf24; --tier-beginner: #94a3b8;
+    --char-skin: #d4a574; --char-stroke: #2a3142; --char-fill: #e6eaf2; --card-glow: rgba(74, 222, 128, 0.15);
+  }
+
+  [data-theme="light"] {
+    --bg: #f7f8fa; --bg-elevated: #ffffff; --bg-cell: #f1f3f7; --bg-cell-center: #e6e9f0; --bg-cell-hover: #e6e9f0;
+    --border: #e2e6ec; --border-strong: #c8cdd6; --text: #1a1f2c; --text-dim: #525b6b; --text-faint: #8a93a6;
+    --accent: #16a34a; --accent-dim: #15803d; --accent-text: #ffffff; --error: #dc2626; --gold: #d97706;
+    --tier-elite: #7c3aed; --tier-excellent: #16a34a; --tier-average: #d97706; --tier-beginner: #64748b;
+    --char-skin: #e8c19e; --char-stroke: #2a3142; --char-fill: #ffffff; --card-glow: rgba(22, 163, 74, 0.1);
+  }
+
+  [data-theme="sepia"] {
+    --bg: #f4ecd8; --bg-elevated: #faf3e0; --bg-cell: #f0e6cc; --bg-cell-center: #e8dcb8; --bg-cell-hover: #e8dcb8;
+    --border: #d9c9a3; --border-strong: #b89968; --text: #3d2f1f; --text-dim: #6b563d; --text-faint: #97826a;
+    --accent: #8b6914; --accent-dim: #6b4f0e; --accent-text: #faf3e0; --error: #a04040; --gold: #b8860b;
+    --tier-elite: #6b3aa0; --tier-excellent: #5a7a2a; --tier-average: #b8860b; --tier-beginner: #97826a;
+    --char-skin: #d4b896; --char-stroke: #3d2f1f; --char-fill: #faf3e0; --card-glow: rgba(184, 134, 11, 0.15);
+  }
+
+  [data-theme="aero"] {
+    --bg: linear-gradient(135deg, #a1dbff 0%, #dcf0ff 40%, #a2d2ff 100%);
+    --bg-elevated: rgba(255, 255, 255, 0.65); --bg-cell: rgba(255, 255, 255, 0.5); --bg-cell-center: rgba(255, 255, 255, 0.9);
+    --bg-cell-hover: rgba(255, 255, 255, 1); --border: rgba(255, 255, 255, 0.7); --border-strong: rgba(14, 165, 233, 0.5);
+    --text: #082f49; --text-dim: #0284c7; --text-faint: #0ea5e9; --accent: #0284c7; --accent-dim: #38bdf8; --accent-text: #ffffff;
+    --error: #e11d48; --gold: #d97706; --tier-elite: #7c3aed; --tier-excellent: #0284c7; --tier-average: #ea580c; --tier-beginner: #475569;
+    --char-skin: #e8c19e; --char-stroke: #082f49; --char-fill: #ffffff; --card-glow: rgba(255, 255, 255, 0.9);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    background: var(--bg); color: var(--text); min-height: 100vh; padding: 32px 20px 80px;
+    -webkit-font-smoothing: antialiased; transition: background 0.4s ease, color 0.4s ease;
+    position: relative; z-index: 1; background-size: 200% 200%; overflow-x: hidden;
+  }
+
+  [data-theme="aero"] { animation: aeroBgShift 20s ease infinite; }
+  @keyframes aeroBgShift { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+
+  [data-theme="aero"] .container, [data-theme="aero"] .stat, [data-theme="aero"] .panel, [data-theme="aero"] .diff-sidebar, [data-theme="aero"] .benefit-card, [data-theme="aero"] .modal, [data-theme="aero"] .toybox, [data-theme="aero"] .reward-row {
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px 0 rgba(2, 132, 199, 0.15), inset 0 1px 0 rgba(255,255,255,0.9);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+  }
+
+  [data-theme="aero"] .cell {
+      box-shadow: inset 0 2px 4px rgba(255,255,255,0.8), inset 0 -2px 4px rgba(2, 132, 199, 0.15), 0 4px 10px rgba(0,0,0,0.05);
+      border: 1px solid rgba(255,255,255,0.7); text-shadow: 0 1px 2px rgba(255,255,255,0.9);
+  }
+  [data-theme="aero"] .cell:active { box-shadow: inset 0 2px 8px rgba(2, 132, 199, 0.3); }
+
+  /* Aero Background Bubbles (Pure HTML/CSS) */
+  #bubbles-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: -1; overflow: hidden; display: none; }
+  [data-theme="aero"] #bubbles-container { display: block; }
+  
+  .bubble {
+    position: absolute; bottom: -100px;
+    background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.95), rgba(255,255,255,0.2));
+    border: 1px solid rgba(255,255,255,0.7); border-radius: 50%;
+    box-shadow: inset -4px -4px 10px rgba(2, 132, 199, 0.2), 0 8px 16px rgba(14,165,233,0.2);
+    animation: floatUp infinite ease-in;
+  }
+  .bubble::after { content:''; position:absolute; top: 15%; left: 15%; width: 25%; height: 25%; background: white; border-radius: 50%; filter: blur(1px); opacity: 0.9; }
+  @keyframes floatUp { 0% { transform: translateY(0) scale(0.6) rotate(0deg); opacity: 0; } 15% { opacity: 1; } 85% { opacity: 0.7; } 100% { transform: translateY(-110vh) scale(1.3) rotate(360deg); opacity: 0; } }
+
+  .container { max-width: 1080px; margin: 0 auto; position: relative; }
+
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 32px; padding-bottom: 24px; border-bottom: 1px solid var(--border); gap: 24px; }
+  .header-left { display: flex; align-items: center; gap: 20px; }
+
+  .character-frame {
+    width: 88px; height: 110px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; position: relative; cursor: pointer; transition: border-color 0.2s, box-shadow 0.4s, transform 0.2s; overflow: hidden;
+  }
+  .character-frame:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 24px var(--card-glow); }
+  .character-frame.high-tier { background: linear-gradient(135deg, var(--bg-elevated), var(--bg-cell-center)); border-color: var(--gold); box-shadow: 0 0 24px -8px var(--gold); }
+  .character-frame.dancing { animation: charDance 0.8s ease-in-out infinite; }
+  @keyframes charDance { 0%, 100% { transform: translateY(0) rotate(0deg); } 25% { transform: translateY(-8px) rotate(-5deg); } 75% { transform: translateY(-8px) rotate(5deg); } }
+
+  .brand { display: flex; flex-direction: column; gap: 6px; }
+  .brand-title {
+    font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1;
+    background: linear-gradient(135deg, var(--text) 0%, var(--accent) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+  }
+  [data-theme="sepia"] .brand-title { background: linear-gradient(135deg, var(--text) 0%, var(--gold) 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  [data-theme="aero"] .brand-title { background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 2px 4px rgba(255,255,255,0.8)); }
+  .brand-sub { font-size: 11px; color: var(--text-faint); letter-spacing: 0.08em; text-transform: uppercase; }
+  .brand-sub .vision-cheat { cursor: pointer; user-select: none; color: inherit; }
+
+  .level-block { text-align: right; min-width: 220px; }
+  .level-label { font-size: 11px; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 4px; }
+  .level-value { font-family: 'Space Grotesk', system-ui, sans-serif; font-size: 36px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .level-value.maxed { background: linear-gradient(135deg, var(--gold), var(--tier-elite)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: gentle-pulse 2.5s ease-in-out infinite; }
+  @keyframes gentle-pulse { 0%, 100% { filter: brightness(1); } 50% { filter: brightness(1.2); } }
+  .level-tier { font-size: 11px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.05em; }
+  .exp-bar-wrap { margin-top: 10px; width: 220px; }
+  .exp-bar { height: 7px; background: var(--bg-cell); border-radius: 4px; overflow: hidden; position: relative; }
+  .exp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent-dim), var(--accent)); transition: width 0.5s ease; border-radius: 4px; position: relative; }
+  .exp-bar-fill::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent); animation: shimmer 2.5s linear infinite; }
+  @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+  .exp-text { font-size: 10px; color: var(--text-faint); margin-top: 4px; text-align: right; }
+
+  .theme-switcher { display: flex; gap: 4px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; padding: 3px; }
+  .theme-btn { width: 28px; height: 28px; border: none; background: transparent; cursor: pointer; border-radius: 4px; font-size: 14px; display: flex; align-items: center; justify-content: center; color: var(--text-dim); transition: background 0.15s, color 0.15s; }
+  .theme-btn:hover { color: var(--text); }
+  .theme-btn.active { background: var(--bg-cell); color: var(--text); }
+
+  .tabs { display: flex; gap: 4px; margin-bottom: 24px; border-bottom: 1px solid var(--border); overflow-x: auto; scrollbar-width: none; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab { background: none; border: none; color: var(--text-dim); padding: 10px 16px; font-family: inherit; font-size: 13px; cursor: pointer; letter-spacing: 0.05em; text-transform: uppercase; border-bottom: 2px solid transparent; transition: color 0.15s, border-color 0.15s; margin-bottom: -1px; white-space: nowrap; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+
+  .controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; align-items: flex-end; }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-label { font-size: 10px; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase; }
+  select, button, input[type="color"] { background: var(--bg-elevated); color: var(--text); border: 1px solid var(--border-strong); padding: 8px 14px; font-family: inherit; font-size: 13px; border-radius: 4px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+  select:hover, button:hover { border-color: var(--accent); }
+  input[type="color"] { padding: 2px 4px; height: 36px; width: 60px; }
+  
+  button.primary { background: var(--accent-dim); border-color: var(--accent); color: var(--accent-text); font-weight: 600; }
+  button.primary:hover { background: var(--accent); }
+  button.secondary { background: var(--bg-elevated); }
+  button.danger { border-color: var(--error); color: var(--error); }
+  button.danger:hover { background: rgba(248, 113, 113, 0.1); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 28px; }
+  .stat { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 6px; padding: 14px 16px; }
+  .stat-label { font-size: 10px; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 6px; }
+  .stat-value { font-size: 22px; font-weight: 700; line-height: 1; }
+  .stat-value.target { color: var(--accent); }
+  .stat-sub { font-size: 10px; color: var(--text-faint); margin-top: 4px; }
+
+  .play-container { display: flex; gap: 24px; align-items: flex-start; width: 100%; position: relative; }
+  .play-stage { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; }
+
+  .diff-sidebar { width: 280px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 20px; font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+  .diff-sidebar h4 { color: var(--text); font-size: 13px; margin-bottom: 12px; letter-spacing: 0.05em; text-transform: uppercase; }
+  .diff-sidebar hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+  .diff-sidebar code { display: block; background: var(--bg-cell); padding: 8px 10px; border-radius: 4px; margin: 12px 0; color: var(--accent); font-size: 11px; text-align: center; }
+
+  /* Interactive Toybox Sidebar */
+  .toybox { position: absolute; right: -70px; top: 0; display: flex; flex-direction: column; gap: 12px; z-index: 50; }
+  @media (max-width: 1250px) { .toybox { position: static; flex-direction: row; margin-top: 16px; justify-content: center; width: 100%; } }
+  .toy-btn { width: 44px; height: 44px; border-radius: 8px; background: var(--bg-elevated); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; transition: all 0.2s; position: relative; opacity: 0.4; filter: grayscale(1); pointer-events: none; }
+  .toy-btn.unlocked { opacity: 1; filter: grayscale(0); pointer-events: auto; }
+  .toy-btn.unlocked:hover { border-color: var(--accent); transform: scale(1.1); box-shadow: 0 4px 12px var(--card-glow); }
+  .toy-btn.shiny-new { border-color: var(--gold); box-shadow: 0 0 12px rgba(251, 191, 36, 0.4); animation: shiny-pulse 2s infinite; }
+  .toy-btn.shiny-new::after { content: 'NEW'; position: absolute; top: -6px; right: -6px; background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 5px; border-radius: 4px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+  
+  .toy-try-me { position: absolute; right: 120%; top: 50%; transform: translateY(-50%); background: var(--gold); color: #000; font-size: 11px; font-weight: bold; padding: 4px 10px; border-radius: 12px; white-space: nowrap; pointer-events: none; animation: bounceX 1s infinite; z-index: 10; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
+  .toy-try-me::after { content: ''; position: absolute; right: -4px; top: 50%; transform: translateY(-50%); border-width: 5px 0 5px 5px; border-style: solid; border-color: transparent transparent transparent var(--gold); }
+  @media (max-width: 1250px) { 
+      .toy-try-me { right: 50%; top: -120%; transform: translateX(50%); animation: bounceY 1s infinite; }
+      .toy-try-me::after { right: 50%; top: 100%; transform: translateX(50%); border-width: 5px 5px 0 5px; border-color: var(--gold) transparent transparent transparent; }
+  }
+  @keyframes bounceX { 0%, 100% { transform: translateY(-50%) translateX(0); } 50% { transform: translateY(-50%) translateX(-6px); } }
+  @keyframes bounceY { 0%, 100% { transform: translateX(50%) translateY(0); } 50% { transform: translateX(50%) translateY(-6px); } }
+
+  .toy-btn .toy-tooltip { position: absolute; right: 120%; top: 50%; transform: translateY(-50%); background: var(--bg-elevated); border: 1px solid var(--border-strong); padding: 6px 12px; border-radius: 4px; font-size: 11px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.2s; color: var(--text); z-index: 5; }
+  @media (max-width: 1250px) { .toy-btn .toy-tooltip { right: 50%; top: -120%; transform: translateX(50%); } }
+  .toy-btn:hover .toy-tooltip { opacity: 1; }
+
+  .board-wrap { display: flex; justify-content: center; margin-bottom: 24px; width: 100%; position: relative; }
+  #board { display: grid; gap: 6px; padding: 6px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; width: 100%; margin: 0 auto; }
+  .cell { display: flex; justify-content: center; align-items: center; background: var(--bg-cell); color: var(--text); font-size: clamp(18px, 4vw, 24px); font-weight: 600; cursor: pointer; user-select: none; border-radius: 4px; transition: background 0.08s, transform 0.06s, color 0.08s, box-shadow 0.1s; border: 1px solid transparent; aspect-ratio: 1; }
+  .cell:hover { background: var(--bg-cell-hover); }
+  .cell:active { transform: scale(0.94); }
+  .cell.center-mark { background: var(--bg-cell-center); border-color: var(--border-strong); }
+  .cell.correct { background: var(--accent); color: var(--accent-text); animation: flash-correct 0.25s ease-out; }
+  .cell.incorrect { box-shadow: inset 0 0 0 2px var(--error); color: var(--error); animation: shake 0.3s; }
+  
+  @keyframes flash-correct { 0% { transform: scale(1); } 40% { transform: scale(1.08); } 100% { transform: scale(1); } }
+  @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+  .board-wrap.game-over .cell { cursor: help; position: relative; }
+  .board-wrap.game-over .cell:hover::after { content: attr(data-latency) "s pause"; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%) translateY(-4px); background: var(--bg-elevated); border: 1px solid var(--accent); color: var(--accent); font-size: 10px; font-weight: 700; padding: 4px 8px; border-radius: 4px; pointer-events: none; white-space: nowrap; z-index: 10; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+
+  .result-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 24px; display: none; }
+  .result-card.visible { display: block; animation: slide-in 0.3s ease-out; }
+  @keyframes slide-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+  .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .result-time { font-size: 32px; font-weight: 700; line-height: 1; font-family: 'Space Grotesk', sans-serif; }
+  .result-tier { padding: 4px 10px; border-radius: 4px; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 600; }
+  
+  .tier-elite { background: rgba(167, 139, 250, 0.15); color: var(--tier-elite); border: 1px solid rgba(167, 139, 250, 0.3); }
+  .tier-excellent { background: rgba(74, 222, 128, 0.15); color: var(--tier-excellent); border: 1px solid rgba(74, 222, 128, 0.3); }
+  .tier-average { background: rgba(251, 191, 36, 0.15); color: var(--tier-average); border: 1px solid rgba(251, 191, 36, 0.3); }
+  .tier-beginner { background: rgba(148, 163, 184, 0.15); color: var(--tier-beginner); border: 1px solid rgba(148, 163, 184, 0.3); }
+
+  .result-exp { display: flex; gap: 24px; padding-top: 12px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text-dim); flex-wrap: wrap; }
+  .result-exp strong { color: var(--accent); font-weight: 700; }
+  .multiplier-badge { color: var(--gold); font-weight: 700; }
+
+  .quick-overview { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95); background: var(--bg-elevated); border: 2px solid var(--accent); border-radius: 12px; padding: 32px 48px; text-align: center; box-shadow: 0 24px 48px rgba(0,0,0,0.6); z-index: 2000; opacity: 0; pointer-events: none; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .quick-overview.visible { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  .quick-overview h2 { font-family: 'Space Grotesk', sans-serif; margin-bottom: 12px; font-size: 24px; color: var(--text); }
+  .quick-overview p { font-size: 14px; color: var(--text-dim); }
+  .quick-overview strong { color: var(--accent); }
+
+  .levelup-toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-200%); background: linear-gradient(135deg, var(--bg-elevated), var(--bg-cell-center)); border: 2px solid var(--gold); border-radius: 12px; padding: 18px 32px; box-shadow: 0 12px 40px -12px var(--gold), 0 0 0 1px var(--gold); z-index: 2500; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s; display: flex; align-items: center; gap: 14px; font-family: 'Space Grotesk', sans-serif; opacity: 0; pointer-events: none; }
+  .levelup-toast.visible { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
+  .levelup-toast-icon { font-size: 28px; }
+  .levelup-toast-text { display: flex; flex-direction: column; gap: 2px; }
+  .levelup-toast-title { font-size: 14px; color: var(--gold); letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700; }
+  .levelup-toast-sub { font-size: 13px; color: var(--text); }
+
+  .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  @media (max-width: 720px) { .analytics-grid { grid-template-columns: 1fr; } }
+  
+  .panel { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+  .panel-title { font-size: 11px; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 16px; }
+  .insight-card { background: var(--bg-elevated); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 6px; padding: 16px 20px; margin-bottom: 12px; }
+  .insight-title { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .insight-body { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+  .insight-card.neutral { border-left-color: var(--text-faint); }
+  .insight-card.warning { border-left-color: var(--gold); }
+  .insight-card.achievement { border-left-color: var(--accent); }
+  .insight-card.danger { border-left-color: var(--error); }
+  
+  .analytics-disclaimer { background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.4); color: var(--gold); padding: 12px 16px; border-radius: 6px; font-size: 12px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+
+  .chart-container { height: 180px; position: relative; margin-top: 8px; }
+
+  .session-list { list-style: none; }
+  .session-row { display: grid; grid-template-columns: 30px 1fr auto auto; gap: 12px; align-items: center; padding: 12px 12px; margin: 0 -12px; border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; border-radius: 6px; transition: background 0.15s, transform 0.15s; }
+  .session-row:hover { background: var(--bg-cell); border-bottom-color: transparent; transform: translateX(4px); }
+  .session-row:last-child { border-bottom: none; }
+  .session-num { color: var(--text-faint); font-size: 11px; }
+  .session-meta { color: var(--text-dim); font-size: 11px; margin-top: 4px; display: flex; align-items: center; gap: 6px; }
+  .session-time { font-weight: 600; }
+  .tier-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .legit-badge { background: var(--bg-cell-center); color: var(--text-faint); padding: 2px 6px; border-radius: 4px; font-size: 9px; font-weight: bold; border: 1px solid var(--border-strong); text-transform: uppercase; letter-spacing: 0.05em; }
+  .legit-badge.non-legit { color: var(--gold); border-color: var(--gold); background: rgba(251, 191, 36, 0.1); }
+
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--text-faint); font-size: 13px; }
+
+  /* Base Customisation UI */
+  .customisation-section { margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .customisation-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .custom-block { background: var(--bg-cell); border: 1px solid var(--border); border-radius: 6px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .custom-block-title { font-size: 10px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+  select.style-picker { padding: 4px 8px; font-size: 11px; margin-top: 4px; width: 100%; border-color: var(--border-strong); }
+
+  /* Rewards Tab UI */
+  .rewards-list { display: flex; flex-direction: column; gap: 12px; }
+  .reward-row { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; }
+  .reward-row.locked { opacity: 0.5; filter: grayscale(1); }
+  .reward-row .r-level { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; color: var(--accent); min-width: 60px; }
+  .reward-row .r-details { flex: 1; }
+  .reward-row .r-title { font-size: 14px; font-weight: 600; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .reward-row .r-sub { font-size: 11px; color: var(--text-dim); margin-top: 4px; }
+  .reward-row .r-type { font-size: 10px; padding: 3px 8px; border-radius: 12px; background: var(--bg-cell); border: 1px solid var(--border-strong); text-transform: uppercase; letter-spacing: 0.05em; }
+
+  .benefits-section { margin-top: 0; }
+  .benefits-title { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; margin-bottom: 8px; margin-top: 32px; letter-spacing: -0.01em; }
+  .benefits-title:first-child { margin-top: 0; }
+  .benefits-sub { color: var(--text-dim); font-size: 13px; margin-bottom: 24px; }
+  .benefits-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 16px; }
+  .benefit-card { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 18px 20px; }
+  .benefit-card h4 { font-size: 13px; margin-bottom: 8px; color: var(--accent); }
+  .benefit-card p { font-size: 13px; color: var(--text-dim); line-height: 1.6; }
+
+  .technique { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 20px 24px; margin-bottom: 12px; }
+  .technique h4 { font-size: 13px; margin-bottom: 10px; }
+  .technique p { font-size: 13px; color: var(--text-dim); line-height: 1.7; }
+
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ============ CHARACTER TAB ============ */
+  .character-grid { display: grid; grid-template-columns: 320px 1fr; gap: 24px; margin-bottom: 24px; }
+  @media (max-width: 860px) { .character-grid { grid-template-columns: 1fr; } .play-container { flex-direction: column; } .diff-sidebar { width: 100%; } }
+
+  .avatar-display { text-align: center; background: linear-gradient(180deg, var(--bg-elevated), var(--bg-cell)); border-radius: 8px; padding: 28px 20px; margin-bottom: 16px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+  .avatar-display::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 30%, var(--card-glow), transparent 60%); pointer-events: none; }
+  .avatar-svg-wrap { background: var(--bg-cell-center); border-radius: 8px; padding: 0; margin-bottom: 16px; display: inline-flex; justify-content: center; border: 1px solid var(--border); position: relative; z-index: 1; overflow: hidden; width: 100%; max-width: 200px; aspect-ratio: 1; }
+
+  .level-pill-large { display: inline-block; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 600; padding: 5px 14px; border-radius: 20px; background: var(--bg-cell); border: 1px solid var(--border-strong); color: var(--text-dim); letter-spacing: 0.05em; text-transform: uppercase; position: relative; z-index: 1; }
+
+  /* Equip Grid UI */
+  .equip-category-title { font-size: 11px; color: var(--text-faint); text-transform: uppercase; letter-spacing: 0.1em; margin: 16px 0 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+  .unlocks-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+  .unlock { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; padding: 12px; text-align: left; font-size: 11px; color: var(--text-faint); transition: all 0.15s; cursor: default; position: relative; display: flex; align-items: center; justify-content: space-between; }
+  .unlock.achieved { background: linear-gradient(160deg, var(--bg-elevated), var(--bg-cell)); border-color: var(--border-strong); color: var(--text); cursor: pointer; }
+  .unlock.achieved:hover { border-color: var(--accent); }
+  .unlock.equipped { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); background: linear-gradient(160deg, var(--bg-cell), var(--bg-cell-hover)); }
+  .unlock.shiny-new { border-color: var(--gold); box-shadow: 0 0 12px rgba(251, 191, 36, 0.4); animation: shiny-pulse 2s infinite; }
+  .unlock.shiny-new::before { content: 'NEW'; position: absolute; top: -6px; left: -6px; background: var(--gold); color: #000; font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; z-index: 2; box-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+  
+  @keyframes shiny-pulse { 0% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.7); } 70% { box-shadow: 0 0 0 8px rgba(251, 191, 36, 0); } 100% { box-shadow: 0 0 0 0 rgba(251, 191, 36, 0); } }
+
+  .unlock-info { display: flex; flex-direction: column; gap: 2px; }
+  .unlock-level { font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 700; color: var(--accent); }
+  .unlock-name { font-weight: 600; color: var(--text); font-size: 13px; }
+  .unlock:not(.achieved) .unlock-name { color: var(--text-faint); }
+  
+  .colour-picker-wrap { display: flex; align-items: center; gap: 8px; }
+  .colour-picker-btn { width: 28px; height: 28px; border-radius: 4px; border: 1px solid var(--border-strong); padding: 0; cursor: pointer; overflow: hidden; }
+  .colour-picker-btn::-webkit-color-swatch-wrapper { padding: 0; }
+  .colour-picker-btn::-webkit-color-swatch { border: none; }
+
+  /* Modals */
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; z-index: 100; animation: fade-in 0.2s ease-out; }
+  .modal-backdrop.visible { display: flex; }
+  @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+  .modal { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 12px; padding: 24px; max-width: 440px; width: 90%; box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5); max-height: 90vh; overflow-y: auto; }
+  .modal h3 { font-family: 'Space Grotesk', sans-serif; font-size: 18px; margin-bottom: 4px; }
+  .modal p { font-size: 12px; color: var(--text-dim); margin-bottom: 18px; line-height: 1.5; }
+  
+  /* Legitimacy Modal Specific */
+  .legit-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 24px; }
+  .legit-btn { padding: 16px; border-radius: 8px; border: 1px solid var(--border-strong); cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 600; transition: all 0.2s; background: var(--bg-cell); color: var(--text); }
+  .legit-btn:hover { transform: translateY(-2px); }
+  .legit-btn.yes { border-color: var(--accent); color: var(--accent); }
+  .legit-btn.yes:hover { background: rgba(74, 222, 128, 0.1); }
+  .legit-btn.no { border-color: var(--gold); color: var(--gold); }
+  .legit-btn.no:hover { background: rgba(251, 191, 36, 0.1); }
+
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+  #smInsights { background: var(--bg-cell); border-left: 3px solid var(--accent); padding: 12px 16px; border-radius: 4px; font-size: 12px; color: var(--text-dim); line-height: 1.6; margin-bottom: 20px; }
+  #smInsights strong { color: var(--text); }
+
+  /* Report Output */
+  #reportOutput { background: var(--bg-cell); border: 1px solid var(--border-strong); border-radius: 6px; padding: 16px; font-size: 12px; line-height: 1.6; color: var(--text); font-family: monospace; white-space: pre-wrap; margin-bottom: 16px; max-height: 400px; overflow-y: auto; }
+
+  /* ============ FOCUS MODE ============ */
+  body.focus .header, body.focus .tabs, body.focus .controls, body.focus .stats, body.focus .result-card, body.focus .view:not(#view-play), body.focus #view-play .controls, body.focus #view-play .stats, body.focus #view-play .result-card, body.focus .diff-sidebar, body.focus .toybox { display: none !important; }
+  body.focus { padding: 0; margin: 0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; }
+  body.focus .container { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; margin: 0; padding: 0; flex: 1; }
+  body.focus .view.active { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; }
+
+  .focus-actions-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 0 auto 18px; }
+  .focus-icon-btn { background: none; border: none; color: var(--text-faint); font-size: 28px; cursor: pointer; transition: color 0.2s, transform 0.2s; padding: 0 10px; display: flex; align-items: center; justify-content: center; }
+  .focus-icon-btn:hover { color: var(--accent); transform: scale(1.15); }
+  
+  /* Hide standard buttons in focus, show only focus buttons */
+  .focus-only-btn { display: none; }
+  body.focus .focus-only-btn { display: flex; }
+
+  .next-indicator { display: none; align-items: center; justify-content: center; gap: 12px; background: transparent; border: none; user-select: none; transition: all 0.2s; }
+  .next-indicator.visible { display: inline-flex; }
+  .next-indicator .ni-label { font-size: 11px; color: var(--text-faint); letter-spacing: 0.1em; text-transform: uppercase; }
+  .next-indicator .ni-value { font-family: 'Space Grotesk', sans-serif; font-weight: 700; color: var(--accent); line-height: 1; font-size: 56px; }
+  body.focus .next-indicator .ni-value { font-size: 72px; background: linear-gradient(135deg, var(--accent), var(--gold)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+
+  @keyframes ni-pulse { 0% { transform: scale(1); } 50% { transform: scale(1.12); } 100% { transform: scale(1); } }
+  .next-indicator.pulse .ni-value { animation: ni-pulse 0.25s ease-out; }
+
+  /* Screen Shake Effect */
+  @keyframes shakeScreen { 0% { transform: translate(1px, 1px) rotate(0deg); } 10% { transform: translate(-1px, -2px) rotate(-1deg); } 20% { transform: translate(-3px, 0px) rotate(1deg); } 30% { transform: translate(3px, 2px) rotate(0deg); } 40% { transform: translate(1px, -1px) rotate(1deg); } 50% { transform: translate(-1px, 2px) rotate(-1deg); } 60% { transform: translate(-3px, 1px) rotate(0deg); } 70% { transform: translate(3px, 1px) rotate(-1deg); } 80% { transform: translate(-1px, -1px) rotate(1deg); } 90% { transform: translate(1px, 2px) rotate(0deg); } 100% { transform: translate(1px, -2px) rotate(-1deg); } }
+  .shaking { animation: shakeScreen 0.5s; animation-iteration-count: infinite; }
+
+  /* ============ XP DOPAMINE ANIMATIONS ============ */
+  .xp-particle { position: fixed; z-index: 1500; pointer-events: none; font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 26px; color: var(--accent); text-shadow: 0 0 16px var(--accent), 0 2px 8px rgba(0,0,0,0.4); animation: xp-float 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+  .xp-particle.gold { color: var(--gold); text-shadow: 0 0 18px var(--gold), 0 2px 8px rgba(0,0,0,0.4); }
+  .xp-particle.purple { color: var(--tier-elite); text-shadow: 0 0 18px var(--tier-elite), 0 2px 8px rgba(0,0,0,0.4); }
+  .xp-particle.penalty { color: var(--text-faint); font-size: 20px; text-shadow: none; }
+  
+  @keyframes xp-float { 0% { opacity: 0; transform: translate(-50%, 0) scale(0.5); } 15% { opacity: 1; transform: translate(-50%, -10px) scale(1.15); } 30% { transform: translate(-50%, -20px) scale(1); } 100% { opacity: 0; transform: translate(-50%, -120px) scale(0.95); } }
+
+  .sparkle { position: fixed; z-index: 1490; pointer-events: none; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .sparkle.gold { background: var(--gold); box-shadow: 0 0 12px var(--gold); }
+  .sparkle.purple { background: var(--tier-elite); box-shadow: 0 0 12px var(--tier-elite); }
+
+  @keyframes bar-flash { 0%, 100% { box-shadow: 0 0 0 0 transparent; } 50% { box-shadow: 0 0 14px 2px var(--accent); } }
+  .exp-bar-fill.gaining { animation: bar-flash 0.7s ease-out; }
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- Aero Bubbles (Pure CSS for guaranteed rendering) -->
+<div id="bubbles-container">
+    <div class="bubble" style="left: 10%; animation-duration: 8s; animation-delay: 0s; width: 40px; height: 40px;"></div>
+    <div class="bubble" style="left: 25%; animation-duration: 12s; animation-delay: 2s; width: 60px; height: 60px;"></div>
+    <div class="bubble" style="left: 45%; animation-duration: 9s; animation-delay: 1s; width: 35px; height: 35px;"></div>
+    <div class="bubble" style="left: 65%; animation-duration: 14s; animation-delay: 3s; width: 50px; height: 50px;"></div>
+    <div class="bubble" style="left: 80%; animation-duration: 10s; animation-delay: 0.5s; width: 45px; height: 45px;"></div>
+    <div class="bubble" style="left: 90%; animation-duration: 15s; animation-delay: 4s; width: 70px; height: 70px;"></div>
+    <div class="bubble" style="left: 15%; animation-duration: 11s; animation-delay: 5s; width: 30px; height: 30px;"></div>
+    <div class="bubble" style="left: 55%; animation-duration: 13s; animation-delay: 2.5s; width: 55px; height: 55px;"></div>
+</div>
+
+<div class="container">
+
+  <!-- Interactive Toybox Sidebar -->
+  <div class="toybox" id="toyboxContainer">
+      <!-- Generated via JS -->
+  </div>
+
+  <header class="header">
+    <div class="header-left">
+      <div class="character-frame" id="characterFrame" title="Click to open customisation">
+        <svg id="characterSvg" width="100%" height="100%" viewBox="0 0 100 100"></svg>
+      </div>
+      <div class="brand">
+        <div class="brand-title">Card's Gamified Schulte Table</div>
+        <div class="brand-sub">
+          Peripheral <span class="vision-cheat" id="visionCheat" title="Gain exactly 1 Level">Vision</span> · Focus Training
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:16px">
+      <div class="level-block">
+        <div class="level-label">Level</div>
+        <div class="level-value" id="levelDisplay">1</div>
+        <div class="level-tier" id="levelTierName">Novice</div>
+        <div class="exp-bar-wrap">
+          <div class="exp-bar"><div class="exp-bar-fill" id="expBarFill" style="width: 0%"></div></div>
+          <div class="exp-text" id="expText">0 / 100 XP</div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="play">Play</button>
+    <button class="tab" data-tab="analytics">Analytics</button>
+    <button class="tab" data-tab="character">Character</button>
+    <button class="tab" data-tab="rewards">Rewards</button>
+    <button class="tab" data-tab="learn">How It Works</button>
+  </nav>
+
+  <section class="view active" id="view-play">
+
+    <div class="controls">
+      <div class="control-group">
+        <span class="control-label">Mode</span>
+        <select id="modeSelect">
+          <option value="classic">Classic (1 to N)</option>
+          <option value="reverse">Reverse (N to 1)</option>
+          <option value="alphanumeric">Alphanumeric (1, A, 2, B...)</option>
+          <option value="timed">Timed Challenge</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <span class="control-label">Grid Size</span>
+        <select id="sizeSelect">
+          <option value="3">3 x 3</option>
+          <option value="4">4 x 4</option>
+          <option value="5" selected>5 x 5</option>
+          <option value="6">6 x 6</option>
+          <option value="7">7 x 7</option>
+        </select>
+      </div>
+      <div class="control-group" id="timedLimitGroup" style="display:none">
+        <span class="control-label">Time Limit</span>
+        <select id="timeLimitSelect">
+          <option value="30">30s</option>
+          <option value="60" selected>60s</option>
+          <option value="90">90s</option>
+          <option value="120">120s</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <span class="control-label">&nbsp;</span>
+        <button class="secondary" id="restartBtn" title="Restart same numbers">Restart</button>
+      </div>
+      <div class="control-group">
+        <span class="control-label">&nbsp;</span>
+        <button class="primary" id="newGameBtn" title="Shuffle and start new">New Game</button>
+      </div>
+      <div class="control-group">
+        <span class="control-label">Board Rating</span>
+        <div id="diffBadge" style="padding: 8px 14px; border-radius: 4px; font-weight: 600; font-size: 13px; background: var(--bg-elevated); border: 1px solid var(--border); color: var(--text-dim); text-align: center;">N/A</div>
+      </div>
+      <div class="control-group" style="margin-left: auto;">
+        <span class="control-label">&nbsp;</span>
+        <button class="primary" id="focusBtn" title="Focus mode: hide everything but the board" style="background: var(--accent); color: var(--accent-text);">Enter Focus Mode</button>
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Target</div>
+        <div class="stat-value target" id="targetNum">1</div>
+        <div class="stat-sub" id="targetSub">Click the next number</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Time</div>
+        <div class="stat-value" id="timerDisplay">0.00</div>
+        <div class="stat-sub" id="timerSub">seconds elapsed</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Best</div>
+        <div class="stat-value" id="bestDisplay">N/A</div>
+        <div class="stat-sub" id="bestSub">this mode + size</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Errors</div>
+        <div class="stat-value" id="errorDisplay">0</div>
+        <div class="stat-sub">misclicks this run</div>
+      </div>
+    </div>
+
+    <div class="result-card" id="resultCard">
+      <div class="result-header">
+        <div>
+          <div class="stat-label">Last Run</div>
+          <div class="result-time" id="resultTime">0.00s</div>
+        </div>
+        <div class="result-tier" id="resultTier">Elite</div>
+      </div>
+      <div class="result-exp" id="resultExp"></div>
+    </div>
+
+    <div class="play-container">
+      <div class="play-stage">
+        <div class="focus-actions-row focus-only-btn">
+          <button id="focusRestartBtn" class="focus-icon-btn" title="Restart same numbers">&#x21BA;</button>
+          <div class="next-indicator" id="nextIndicator">
+            <span class="ni-label">Next</span>
+            <span class="ni-value" id="nextIndicatorValue">1</span>
+          </div>
+          <button id="focusNewBtn" class="focus-icon-btn" title="Shuffle and start new">&#x271A;</button>
+          <button id="focusExitBtn" class="focus-icon-btn" title="Exit Focus (ESC)">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+        </div>
+        <div class="board-wrap" id="boardWrap">
+          <div id="board"></div>
+        </div>
+      </div>
+      
+      <div class="diff-sidebar" id="diffSidebar">
+        <h4>Board Analysis</h4>
+        <p>Difficulty: <strong id="sdLabel">Normal</strong></p>
+        <p>Spacing Score: <strong id="sdScore">3.10</strong></p>
+        <p>XP Multiplier: <strong id="sdMult">x3</strong></p>
+        <hr>
+        <h4>The Mathematics</h4>
+        <p>This score evaluates the <strong>Euclidean distance</strong> between consecutive targets.</p>
+        <code>d = &radic;((x₂ - x₁)&sup2; + (y₂ - y₁)&sup2;)</code>
+        <p style="margin-top:12px">A higher average distance means the numbers are <strong>scattered</strong> (Hard), demanding wider visual scanning and granting an XP bonus.</p>
+        <p style="margin-top:8px">A lower average means the board is <strong>clustered</strong> (Easy).</p>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="view" id="view-analytics">
+
+    <div class="controls">
+      <div class="control-group">
+        <span class="control-label">Filter Mode</span>
+        <select id="analyticsMode">
+          <option value="all">All Modes</option>
+          <option value="classic">Classic</option>
+          <option value="reverse">Reverse</option>
+          <option value="alphanumeric">Alphanumeric</option>
+          <option value="timed">Timed</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <span class="control-label">Filter Size</span>
+        <select id="analyticsSize">
+          <option value="all">All Sizes</option>
+          <option value="3">3 x 3</option>
+          <option value="4">4 x 4</option>
+          <option value="5">5 x 5</option>
+          <option value="6">6 x 6</option>
+          <option value="7">7 x 7</option>
+        </select>
+      </div>
+      <div class="control-group">
+        <span class="control-label">&nbsp;</span>
+        <button class="primary" id="generateReportBtn" style="background: var(--accent); color: var(--accent-text);">Detailed Report</button>
+      </div>
+      <div class="control-group" style="margin-left:auto">
+        <span class="control-label">&nbsp;</span>
+        <button class="danger" id="clearBtn">Reset All Data</button>
+      </div>
+    </div>
+    
+    <div class="analytics-disclaimer" id="analyticsDisclaimer">
+      <strong>Note:</strong> Practice runs (where your eyes drifted) are completely excluded from these analytics to preserve the accuracy of your progression data. Non legitimate flagged games do not sit in here for detailed reports and analytics.
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="stat-label">Legitimate Sessions</div><div class="stat-value" id="aTotal">0</div></div>
+      <div class="stat"><div class="stat-label">Best Time</div><div class="stat-value" id="aBest">N/A</div></div>
+      <div class="stat"><div class="stat-label">Avg Time</div><div class="stat-value" id="aAvg">N/A</div></div>
+      <div class="stat">
+        <div class="stat-label">Trend</div>
+        <div class="stat-value" id="aTrend">N/A</div>
+        <div class="stat-sub" id="aTrendSub">last 5 vs prior 5</div>
+      </div>
+    </div>
+
+    <div id="insightContainer" style="margin-bottom:24px"></div>
+
+    <div class="analytics-grid">
+      <div class="panel">
+        <div class="panel-title">Time Trend (last 30 legitimate)</div>
+        <div class="chart-container"><canvas id="trendChart"></canvas></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Tier Distribution</div>
+        <div id="tierBreakdown"></div>
+      </div>
+    </div>
+    
+    <div class="analytics-grid">
+      <div class="panel">
+        <div class="panel-title">Top 5 Records <span style="font-weight:normal; text-transform:none; opacity:0.7;">(Current Filter)</span></div>
+        <ul class="session-list" id="topScoresList"></ul>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Recent Sessions <span style="font-weight:normal; text-transform:none; opacity:0.7;">(Click to review)</span></div>
+        <ul class="session-list" id="sessionList"></ul>
+      </div>
+    </div>
+
+  </section>
+
+  <section class="view" id="view-character">
+
+    <div class="character-grid">
+      <div>
+        <div class="avatar-display">
+          <div class="avatar-svg-wrap">
+            <svg id="characterSvgLarge" width="100%" height="100%" viewBox="0 0 100 100"></svg>
+          </div>
+          <div style="display:flex;justify-content:center;gap:8px;margin-bottom:12px">
+            <span class="level-pill-large" id="charPill">Level 1 · Novice</span>
+          </div>
+          <button class="secondary" id="genderToggleLarge" style="width:100%">Switch Gender Base (M/F)</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="progression-panel">
+          <div class="panel-title">Progression</div>
+          <div class="progression-level" id="charLevel">Level 1</div>
+          <div class="progression-tier" id="charTierName">Novice</div>
+          <div class="exp-bar"><div class="exp-bar-fill" id="charExpFill" style="width:0%"></div></div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-faint);margin-top:8px">
+            <span id="charExpCurrent">0 XP</span>
+            <span id="charExpNext">/ 100 XP</span>
+          </div>
+        </div>
+
+        <div class="customisation-section">
+          <div class="benefits-title" style="margin-top:0">Base Appearance</div>
+          <div class="benefits-sub" style="margin-bottom:12px">Select your permanent traits. These sit underneath equipped clothing.</div>
+          
+          <div class="customisation-grid">
+            <div class="custom-block">
+              <span class="custom-block-title">Skin Colour</span>
+              <input type="color" id="picker-skin" value="#d4a574" class="colour-picker-btn">
+            </div>
+            <div class="custom-block">
+              <span class="custom-block-title">Hair Colour</span>
+              <input type="color" id="picker-hair" value="#3d2817" class="colour-picker-btn">
+            </div>
+            <div class="custom-block">
+              <span class="custom-block-title">Base Shirt</span>
+              <input type="color" id="picker-shirt" value="#e6eaf2" class="colour-picker-btn">
+            </div>
+            <div class="custom-block">
+              <span class="custom-block-title">Hair Style</span>
+              <select class="style-picker" id="hairStylePicker">
+                  <option value="0">Style 1</option>
+                  <option value="1">Style 2</option>
+                  <option value="2">Style 3</option>
+                  <option value="3">Style 4</option>
+                  <option value="4">Style 5</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="benefits-title" style="margin-top:24px">Wardrobe & Effects</div>
+        <div class="benefits-sub">Click an unlocked item to equip or unequip it. Only one item per category can be active. Pick its colour next to it.</div>
+        
+        <div id="unlocksCategories">
+            <!-- Dynamically populated categories -->
+        </div>
+
+      </div>
+    </div>
+
+  </section>
+  
+  <section class="view" id="view-rewards">
+      <div class="benefits-title" style="margin-top:0">Progression Path</div>
+      <div class="benefits-sub">Every level requires exactly 100 XP. Push harder boards for massive XP multipliers.</div>
+      <div class="rewards-list" id="rewardsList">
+          <!-- Populated by JS -->
+      </div>
+  </section>
+
+  <section class="view" id="view-learn">
+
+    <div class="benefits-section">
+      <div class="benefits-title">What is a Schulte Table</div>
+      <div class="benefits-sub">A grid of randomised numbers used to widen peripheral vision and sharpen visual attention. Originally developed by German psychiatrist Walter Schulte for attention research.</div>
+
+      <div class="benefits-grid">
+        <div class="benefit-card">
+          <h4>Peripheral Vision</h4>
+          <p>Forces the eye to take in numbers at the edges of the grid without moving the gaze from the centre. Trains a wider visual span.</p>
+        </div>
+        <div class="benefit-card">
+          <h4>Reading Mechanics</h4>
+          <p>A wider visual span means fewer eye fixations per line. This is one of the underlying mechanics of speed reading, though gains in actual reading speed depend on practice with text itself.</p>
+        </div>
+        <div class="benefit-card">
+          <h4>Focused Attention</h4>
+          <p>Sustained search under time pressure builds the kind of narrow, deliberate focus useful for any task that demands concentration.</p>
+        </div>
+        <div class="benefit-card">
+          <h4>Visual Memory</h4>
+          <p>You start to remember where numbers are after one pass over the grid, training short-term spatial recall.</p>
+        </div>
+      </div>
+
+      <div class="benefits-title">How to Use It Properly</div>
+      <div class="benefits-sub">The point is not to get a fast time. The point is to get a fast time without moving your eyes.</div>
+
+      <div class="technique">
+        <h4>1. Lock the Centre</h4>
+        <p>Fix your gaze on the centre cell (highlighted on odd grids). Do not move your eyes off it for the entire run. If you catch yourself scanning, stop and reset. Cheating defeats the training effect.</p>
+      </div>
+      <div class="technique">
+        <h4>2. Use Peripheral Vision Only</h4>
+        <p>Find each number using the awareness around your central focus point. It will feel slow and uncomfortable at first. That discomfort is the training.</p>
+      </div>
+      <div class="technique">
+        <h4>3. Start Small, Build Up</h4>
+        <p>Begin at 3 x 3 or 4 x 4. Move up to 5 x 5 once you can hold central fixation comfortably. Most adults plateau around 5 x 5; 7 x 7 is genuinely demanding.</p>
+      </div>
+      <div class="technique">
+        <h4>4. Short, Frequent Sessions</h4>
+        <p>Five to ten minutes a day will outperform a single half-hour session. The skill consolidates between sessions, not within them.</p>
+      </div>
+    </div>
+
+  </section>
+
+</div>
+
+<!-- Quick Overview Fade Toast -->
+<div id="quickOverview" class="quick-overview">
+  <h2 id="qoTitle">Run Complete!</h2>
+  <p id="qoStats"></p>
+</div>
+
+<!-- Session Details Modal -->
+<div class="modal-backdrop" id="sessionModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 16px;">
+      <div>
+        <h3 id="smTitle">Session Details</h3>
+        <div id="smDate" style="font-size:11px; color:var(--text-faint);"></div>
+      </div>
+      <div id="smTier" class="result-tier"></div>
+    </div>
+    
+    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:12px; margin-bottom: 20px;">
+      <div class="stat"><div class="stat-label">Total Time</div><div class="stat-value" id="smTime" style="font-size:18px"></div></div>
+      <div class="stat"><div class="stat-label">Avg Click</div><div class="stat-value" id="smAvgClick" style="font-size:18px"></div></div>
+      <div class="stat"><div class="stat-label">Errors</div><div class="stat-value" id="smErrors" style="font-size:18px"></div></div>
+      <div class="stat"><div class="stat-label">Board Diff</div><div class="stat-value" id="smDiff" style="font-size:18px"></div></div>
+    </div>
+    
+    <div id="smInsights">
+        <!-- Dynamic insights populate here -->
+    </div>
+
+    <h4 style="font-size:11px; color:var(--text-faint); text-transform:uppercase; letter-spacing:0.1em; margin-bottom:8px;">Top 5 Longest Pauses</h4>
+    <ul id="smPauses" style="list-style:none; padding:0; margin:0 0 20px 0; font-size:13px; color:var(--text-dim);">
+    </ul>
+    
+    <div class="modal-actions">
+      <button class="secondary" id="sessionModalClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Legitimacy Post-Game Modal -->
+<div class="modal-backdrop" id="legitModal">
+  <div class="modal" onclick="event.stopPropagation()">
+    <h3 style="font-size:22px; color:var(--text); text-align:center;">Eyes locked on centre?</h3>
+    <p style="text-align:center; margin-top:8px;">Did you keep your eyes strictly on the centre square for the entire run, or did you drift to search manually?</p>
+    
+    <div class="legit-buttons">
+      <button class="legit-btn yes" id="legitYesBtn">Yes, solid focus<br><span style="font-size:11px; font-weight:normal; opacity:0.8">Legitimate Run (100% XP)</span></button>
+      <button class="legit-btn no" id="legitNoBtn">No, I drifted<br><span style="font-size:11px; font-weight:normal; opacity:0.8">Practice Run (75% XP)</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- Detailed Analytics Report Modal -->
+<div class="modal-backdrop" id="reportModal">
+  <div class="modal" onclick="event.stopPropagation()" style="max-width: 600px;">
+    <h3>Detailed Performance Analysis</h3>
+    <p>A comprehensive summary of your peripheral vision progression over time.</p>
+    <div id="reportOutput">Generating report...</div>
+    <div class="modal-actions">
+      <button class="secondary" id="reportModalClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================ UNLOCKS & TOYS ============================ */
+
+const UNLOCKS = [
+  // APPRENTICE tier
+  { level: 2,  key: 'glasses',    name: 'Reading Glasses', desc: 'Vision sharpened',           category: 'face',     defaultColour: '#1f2937' },
+  { level: 5,  key: 'cardigan',   name: 'Cardigan',        desc: 'Comfort in study',           category: 'clothing', defaultColour: '#78350f' },
+  { level: 8,  key: 'tie',        name: 'Necktie',         desc: 'Business mind',              category: 'clothing', defaultColour: '#1e40af' },
+  
+  // SCHOLAR tier
+  { level: 12, key: 'jacket',     name: 'Tweed Jacket',    desc: 'The look of a thinker',      category: 'clothing', defaultColour: '#44403c' },
+  { level: 18, key: 'scarf',      name: 'Scholar Scarf',   desc: 'Distinguished air',          category: 'clothing', defaultColour: '#7c3aed' },
+  { level: 25, key: 'monocle',    name: 'Monocle',         desc: 'A scholar emerges',          category: 'face',     defaultColour: '#fbbf24' },
+  { level: 30, key: 'labcoat',    name: 'Lab Coat',        desc: 'Researcher status',          category: 'clothing', defaultColour: '#fafaf9' },
+
+  // PRESTIGE tier
+  { level: 40, key: 'tophat',     name: 'Top Hat',         desc: 'Distinguished gentleman',    category: 'headwear', defaultColour: '#1e3a8a' },
+  { level: 50, key: 'sparkle_dust',name: 'Sparkle Dust',   desc: 'A magical aura surrounds you',category: 'effect',   defaultColour: '#0ea5e9' },
+  { level: 60, key: 'cosmic_eyes',name: 'Cosmic Eyes',     desc: 'Sight beyond sight',         category: 'face',     defaultColour: '#38bdf8' },
+
+  // MYTHIC tier
+  { level: 70, key: 'orbiting_moons',name:'Orbiting Moons',desc: 'Gravitational mastery',      category: 'effect',   defaultColour: '#cbd5e1' },
+  { level: 75, key: 'halo',       name: 'Glowing Halo',    desc: 'Enlightened',                category: 'headwear', defaultColour: '#fbbf24' },
+  { level: 80, key: 'matrix_rain',name: 'Data Stream',     desc: 'Seeing the code directly',   category: 'effect',   defaultColour: '#22c55e' },
+  { level: 85, key: 'equations',  name: 'Floating Formula',desc: 'Ideas made visible',         category: 'effect',   defaultColour: '#a78bfa' },
+  { level: 90, key: 'crown',      name: 'Crown',           desc: 'Schulte royalty',            category: 'headwear', defaultColour: '#fbbf24' },
+  { level: 95, key: 'wings',      name: 'Wisdom Wings',    desc: 'Thoughts take flight',       category: 'aura',     defaultColour: '#fde68a' },
+  { level: 100, key: 'ascension', name: 'Prismatic Aura',  desc: 'The summit of mastery',      category: 'aura',     defaultColour: '#a78bfa' },
+];
+
+const TOYS = [
+    { level: 3, id: 'toy-aero', icon: '🫧', name: 'Aero Theme', desc: 'Toggle the aquatic glassmorphism theme', action: toggleAeroTheme },
+    { level: 5, id: 'toy-orb', icon: '🔮', name: 'Focus Orb', desc: 'Launch a bouncing orb around the screen', action: spawnBouncingOrb },
+    { level: 10, id: 'toy-dance', icon: '🕺', name: 'Dance Break', desc: 'Make your character dance', action: toggleCharacterDance },
+    { level: 15, id: 'toy-battle', icon: '⚔️', name: 'Stickman Battle', desc: 'Spawn two fighters to battle it out', action: spawnStickmanBattle },
+    { level: 20, id: 'toy-explode', icon: '💥', name: 'Explode', desc: 'Temporarily explode the interface', action: triggerExplosion }
+];
+
+const MAX_LEVEL = 100;
+
+const TIER_NAMES = [
+  { min: 1,  name: 'Novice' },
+  { min: 5,  name: 'Apprentice' },
+  { min: 15, name: 'Adept' },
+  { min: 30, name: 'Scholar' },
+  { min: 50, name: 'Expert' },
+  { min: 70, name: 'Master' },
+  { min: 85, name: 'Grandmaster' },
+  { min: 100, name: 'Ascended' },
+];
+
+function getTierName(level) {
+  let name = 'Novice';
+  for (const t of TIER_NAMES) if (level >= t.min) name = t.name;
+  return name;
+}
+
+/* ============================ NEW PORTRAIT SVG ENGINE ============================ */
+function buildCharacterSvg(level, gender) {
+  const isF = gender === 'F';
+  
+  const colourOf = (key) => {
+    const baseColours = state.baseColours || {};
+    if (baseColours[key]) return baseColours[key];
+    const u = UNLOCKS.find(un => un.key === key);
+    if (!u) return '#888';
+    return (state.itemColours && state.itemColours[key]) ? state.itemColours[key] : u.defaultColour;
+  };
+
+  const isEquipped = (cat, key) => state.equipped && state.equipped[cat] === key;
+
+  const baseColours = state.baseColours || {};
+  const skin = baseColours.skinColour || '#d4a574';
+  const hairCol = baseColours.hairColour || '#3d2817';
+  const baseShirt = baseColours.baseShirt || '#e6eaf2';
+  
+  const baseStyles = state.baseStyles || {};
+  const hStyle = parseInt(baseStyles.hair || 0);
+
+  let svg = `<g transform="translate(0, 10)">`;
+
+  // 1. AURA LAYER
+  if (isEquipped('aura', 'ascension')) {
+      svg += `
+        <defs>
+          <radialGradient id="ascGrad">
+            <stop offset="0%" stop-color="${colourOf('ascension')}" stop-opacity="0.8"/>
+            <stop offset="60%" stop-color="${colourOf('ascension')}" stop-opacity="0.2"/>
+            <stop offset="100%" stop-color="${colourOf('ascension')}" stop-opacity="0"/>
+          </radialGradient>
+        </defs>
+        <circle cx="50" cy="40" r="45" fill="url(#ascGrad)">
+            <animate attributeName="opacity" values="0.7;1;0.7" dur="3s" repeatCount="indefinite"/>
+        </circle>
+        <path d="M 0 100 L 50 20 L 100 100 Z" fill="${colourOf('ascension')}" opacity="0.15" />
+      `;
+  } else if (isEquipped('aura', 'wings')) {
+      svg += `
+        <path d="M 50 40 Q 15 20 10 60 Q 30 50 50 60 Z" fill="${colourOf('wings')}" opacity="0.9" stroke="var(--char-stroke)" stroke-width="0.8"/>
+        <path d="M 50 40 Q 85 20 90 60 Q 70 50 50 60 Z" fill="${colourOf('wings')}" opacity="0.9" stroke="var(--char-stroke)" stroke-width="0.8"/>
+      `;
+  }
+
+  // 2. BACK HAIR
+  if (isF) {
+      if (hStyle === 1) { // Long Flowing
+          svg += `<path d="M 30 30 Q 20 50 25 80 L 75 80 Q 80 50 70 30 Z" fill="${hairCol}"/>`;
+      } else if (hStyle === 2) { // Ponytail back
+          svg += `<path d="M 50 30 C 80 20, 75 60, 60 70 C 55 60, 50 40, 50 30 Z" fill="${hairCol}"/>`;
+      } else if (hStyle === 3) { // Braids back
+          svg += `<path d="M 30 30 L 25 70 L 35 70 Z" fill="${hairCol}"/><path d="M 70 30 L 65 70 L 75 70 Z" fill="${hairCol}"/>`;
+      } else if (hStyle === 4) { // Messy Bun back
+          svg += `<circle cx="50" cy="10" r="12" fill="${hairCol}"/>`;
+      }
+  }
+
+  // 3. BODY
+  const shoulderPath = isF 
+      ? `M 35 60 Q 50 55 65 60 Q 75 70 75 100 L 25 100 Q 25 70 35 60 Z`
+      : `M 30 60 Q 50 55 70 60 Q 85 70 85 100 L 15 100 Q 15 70 30 60 Z`;
+      
+  svg += `<path d="${shoulderPath}" fill="${baseShirt}" stroke="var(--char-stroke)" stroke-width="1.5"/>`;
+  svg += `<rect x="44" y="50" width="12" height="15" fill="${skin}" stroke="var(--char-stroke)" stroke-width="1.5"/>`;
+
+  // CLOTHING LAYER
+  if (isEquipped('clothing', 'labcoat')) {
+      svg += `
+        <path d="${shoulderPath}" fill="${colourOf('labcoat')}" stroke="var(--char-stroke)" stroke-width="1.5"/>
+        <path d="M 45 60 L 50 75 L 55 60" fill="none" stroke="var(--char-stroke)" stroke-width="1.5"/>
+        <line x1="50" y1="75" x2="50" y2="100" stroke="var(--char-stroke)" stroke-width="1.5"/>
+      `;
+  } else if (isEquipped('clothing', 'jacket')) {
+      svg += `
+        <path d="${shoulderPath}" fill="${colourOf('jacket')}" stroke="var(--char-stroke)" stroke-width="1.5"/>
+        <path d="M 40 60 L 50 85 L 60 60 Z" fill="${baseShirt}" stroke="var(--char-stroke)" stroke-width="1.5"/>
+      `;
+  } else if (isEquipped('clothing', 'cardigan')) {
+      svg += `
+        <path d="${shoulderPath}" fill="${colourOf('cardigan')}" stroke="var(--char-stroke)" stroke-width="1.5"/>
+        <path d="M 46 60 L 50 90 L 54 60 Z" fill="${baseShirt}" stroke="var(--char-stroke)" stroke-width="1.5"/>
+        <circle cx="50" cy="70" r="1.5" fill="var(--char-stroke)"/>
+        <circle cx="50" cy="80" r="1.5" fill="var(--char-stroke)"/>
+      `;
+  } else if (isEquipped('clothing', 'scarf')) {
+      svg += `
+        <path d="M 35 55 L 65 55 Q 70 65 65 70 L 35 70 Q 30 65 35 55 Z" fill="${colourOf('scarf')}" stroke="var(--char-stroke)" stroke-width="1.5"/>
+        <path d="M 55 70 L 60 95 L 50 95 Z" fill="${colourOf('scarf')}" stroke="var(--char-stroke)" stroke-width="1"/>
+      `;
+  } else if (isEquipped('clothing', 'tie')) {
+      svg += `<path d="M 48 60 L 52 60 L 55 85 L 50 90 L 45 85 Z" fill="${colourOf('tie')}" stroke="var(--char-stroke)" stroke-width="1"/>`;
+  }
+
+  // 4. HEAD & FACE
+  svg += `<circle cx="50" cy="35" r="18" fill="${skin}" stroke="var(--char-stroke)" stroke-width="1.5"/>`;
+
+  if (isEquipped('face', 'cosmic_eyes')) {
+      svg += `
+        <ellipse cx="43" cy="33" rx="3" ry="3" fill="${colourOf('cosmic_eyes')}">
+            <animate attributeName="ry" values="3;0.2;3;3;3" keyTimes="0;0.05;0.1;0.95;1" dur="4s" repeatCount="indefinite" />
+        </ellipse>
+        <ellipse cx="57" cy="33" rx="3" ry="3" fill="${colourOf('cosmic_eyes')}">
+            <animate attributeName="ry" values="3;0.2;3;3;3" keyTimes="0;0.05;0.1;0.95;1" dur="4s" repeatCount="indefinite" />
+        </ellipse>
+        <circle cx="43" cy="33" r="1" fill="#fff"><animate attributeName="opacity" values="0.4;1;0.4" dur="1s" repeatCount="indefinite" /></circle>
+        <circle cx="57" cy="33" r="1" fill="#fff"><animate attributeName="opacity" values="0.4;1;0.4" dur="1s" repeatCount="indefinite" /></circle>
+      `;
+  } else {
+      svg += `
+        <ellipse cx="43" cy="33" rx="2" ry="2" fill="var(--char-stroke)">
+            <animate attributeName="ry" values="2;0.1;2;2;2" keyTimes="0;0.05;0.1;0.95;1" dur="4s" repeatCount="indefinite" />
+        </ellipse>
+        <ellipse cx="57" cy="33" rx="2" ry="2" fill="var(--char-stroke)">
+            <animate attributeName="ry" values="2;0.1;2;2;2" keyTimes="0;0.05;0.1;0.95;1" dur="4s" repeatCount="indefinite" />
+        </ellipse>
+      `;
+  }
+  svg += `
+    <path stroke="var(--char-stroke)" stroke-width="1.5" fill="none" stroke-linecap="round">
+        <animate attributeName="d" values="M 45 42 Q 50 42 55 42; M 45 41 Q 50 46 55 41; M 45 41 Q 50 46 55 41; M 45 42 Q 50 42 55 42" keyTimes="0;0.1;0.9;1" dur="6s" repeatCount="indefinite"/>
+    </path>
+  `;
+
+  if (isEquipped('face', 'glasses')) {
+      svg += `
+        <circle cx="43" cy="33" r="4.5" fill="none" stroke="${colourOf('glasses')}" stroke-width="1.5"/>
+        <circle cx="57" cy="33" r="4.5" fill="none" stroke="${colourOf('glasses')}" stroke-width="1.5"/>
+        <line x1="47.5" y1="33" x2="52.5" y2="33" stroke="${colourOf('glasses')}" stroke-width="1.5"/>
+      `;
+  } else if (isEquipped('face', 'monocle')) {
+      svg += `
+        <circle cx="57" cy="33" r="5" fill="none" stroke="${colourOf('monocle')}" stroke-width="1.5"/>
+        <line x1="61" y1="36" x2="65" y2="45" stroke="${colourOf('monocle')}" stroke-width="1"/>
+      `;
+  }
+
+  // 5. FRONT HAIR
+  if (isF) {
+      if (hStyle === 0) { // Bob
+          svg += `<path d="M 30 35 Q 30 10 50 15 Q 70 10 70 35 L 68 50 L 50 15 L 32 50 Z" fill="${hairCol}"/>`;
+      } else if (hStyle === 1) { // Long Flowing (front part)
+          svg += `<path d="M 32 35 Q 32 12 50 15 Q 68 12 68 35 L 65 20 Q 50 25 35 20 Z" fill="${hairCol}"/>`;
+      } else if (hStyle === 2) { // Ponytail front
+          svg += `<path d="M 32 30 Q 32 15 50 15 Q 68 15 68 30 L 50 20 Z" fill="${hairCol}"/>`;
+      } else if (hStyle === 3) { // Braids front
+          svg += `<path d="M 32 35 Q 32 15 50 15 Q 68 15 68 35 L 50 25 Z" fill="${hairCol}"/>`;
+      } else if (hStyle === 4) { // Messy Bun front
+          svg += `<path d="M 32 30 Q 32 15 50 15 Q 68 15 68 30 L 50 25 Z" fill="${hairCol}"/>`;
+      }
+  } else {
+      if (hStyle === 0) { // Short
+          svg += `<path d="M 32 25 Q 32 15 50 15 Q 68 15 68 25 L 50 20 Z" fill="${hairCol}"/>`;
+      } else if (hStyle === 1) { // Spiky
+          svg += `<polygon points="32,25 30,10 40,18 45,5 55,16 65,8 68,25" fill="${hairCol}"/>`;
+      } else if (hStyle === 2) { // Swept
+          svg += `<path d="M 30 30 C 30 5, 65 5, 70 20 C 70 25, 50 10, 30 30 Z" fill="${hairCol}"/>`;
+      } else if (hStyle === 3) { // Curly
+          svg += `<path d="M 30 25 Q 35 5 50 10 Q 65 5 70 25 Q 50 15 30 25 Z" fill="${hairCol}"/>`;
+      } else if (hStyle === 4) { // Buzz
+          svg += `<path d="M 33 22 Q 50 15 67 22 L 50 20 Z" fill="${hairCol}"/>`;
+      }
+  }
+
+  // 6. HEADWEAR
+  if (isEquipped('headwear', 'tophat')) {
+      svg += `
+        <rect x="30" y="14" width="40" height="3" fill="${colourOf('tophat')}" stroke="var(--char-stroke)" stroke-width="1"/>
+        <rect x="37" y="-5" width="26" height="20" fill="${colourOf('tophat')}" stroke="var(--char-stroke)" stroke-width="1"/>
+        <rect x="37" y="10" width="26" height="3" fill="#fbbf24"/>
+      `;
+  } else if (isEquipped('headwear', 'crown')) {
+      svg += `
+        <path d="M 32 15 L 35 2 L 42 10 L 50 0 L 58 10 L 65 2 L 68 15 Z" fill="${colourOf('crown')}" stroke="var(--char-stroke)" stroke-width="1"/>
+        <circle cx="42" cy="10" r="1.5" fill="#e11d48"/>
+        <circle cx="50" cy="5" r="2" fill="#38bdf8"/>
+        <circle cx="58" cy="10" r="1.5" fill="#e11d48"/>
+      `;
+  } else if (isEquipped('headwear', 'halo')) {
+      svg += `
+        <ellipse cx="50" cy="-2" rx="16" ry="4" fill="none" stroke="${colourOf('halo')}" stroke-width="2" opacity="0.9">
+          <animate attributeName="opacity" values="0.6;1;0.6" dur="2s" repeatCount="indefinite"/>
+        </ellipse>
+      `;
+  }
+
+  // 7. EFFECTS
+  if (isEquipped('effect', 'orbiting_moons')) {
+      svg += `
+        <g>
+            <animateTransform attributeName="transform" type="rotate" from="0 50 40" to="360 50 40" dur="5s" repeatCount="indefinite"/>
+            <circle cx="15" cy="40" r="4" fill="${colourOf('orbiting_moons')}"/>
+            <circle cx="85" cy="40" r="2.5" fill="${colourOf('orbiting_moons')}"/>
+        </g>
+      `;
+  }
+  if (isEquipped('effect', 'matrix_rain')) {
+      svg += `
+        <g fill="${colourOf('matrix_rain')}" opacity="0.6" font-family="monospace" font-size="6">
+            <text x="15" y="0"><animate attributeName="y" values="-10;110" dur="2s" repeatCount="indefinite"/>1</text>
+            <text x="25" y="-20"><animate attributeName="y" values="-20;110" dur="2.5s" repeatCount="indefinite"/>0</text>
+            <text x="80" y="-10"><animate attributeName="y" values="-10;110" dur="1.8s" repeatCount="indefinite"/>1</text>
+            <text x="85" y="-30"><animate attributeName="y" values="-30;110" dur="2.2s" repeatCount="indefinite"/>0</text>
+        </g>
+      `;
+  }
+  if (isEquipped('effect', 'equations')) {
+      svg += `
+        <text x="10" y="20" font-size="8" fill="${colourOf('equations')}" font-family="monospace">π</text>
+        <text x="80" y="25" font-size="7" fill="${colourOf('equations')}" font-family="monospace">∑</text>
+        <text x="15" y="80" font-size="6" fill="${colourOf('equations')}" font-family="monospace">∞</text>
+        <text x="75" y="75" font-size="6" fill="${colourOf('equations')}" font-family="monospace">√x</text>
+        <animate attributeName="opacity" values="0.5;1;0.5" dur="3s" repeatCount="indefinite"/>
+      `;
+  }
+  if (isEquipped('effect', 'sparkle_dust')) {
+      svg += `
+        <circle cx="20" cy="30" r="1.5" fill="${colourOf('sparkle_dust')}"><animate attributeName="opacity" values="0;1;0" dur="1.5s" repeatCount="indefinite"/></circle>
+        <circle cx="80" cy="50" r="2" fill="${colourOf('sparkle_dust')}"><animate attributeName="opacity" values="0;1;0" dur="2.1s" repeatCount="indefinite"/></circle>
+        <circle cx="30" cy="85" r="1" fill="${colourOf('sparkle_dust')}"><animate attributeName="opacity" values="0;1;0" dur="1.8s" repeatCount="indefinite"/></circle>
+        <circle cx="70" cy="15" r="1.5" fill="${colourOf('sparkle_dust')}"><animate attributeName="opacity" values="0;1;0" dur="2.4s" repeatCount="indefinite"/></circle>
+      `;
+  }
+
+  svg += `</g>`;
+  return svg;
+}
+
+/* ============================ STATE & STORAGE ============================ */
+const STORAGE_KEY = 'schulte_state_v16';
+
+const state = {
+  size: 5, mode: 'classic', timeLimit: 60,
+  sequence: [], boardValues: [], currentIndex: 0, isPlaying: false, isGameOver: false, startTime: 0, errors: 0,
+  timerInterval: null, countdownInterval: null, history: [], totalExp: 0, gender: 'M', theme: 'dark',
+  baseColours: { skinColour: '#d4a574', hairColour: '#3d2817', baseShirt: '#e6eaf2' },
+  baseStyles: { hair: 0 },
+  equipped: { headwear: null, face: null, clothing: null, aura: null, effect: null },
+  itemColours: {}, focus: false, latencies: [], lastClickTime: 0, spatialDifficulty: 0, pendingSession: null,
+  unseenUnlocks: [], unseenToys: []
+};
+
+function loadState() {
+  try {
+    let raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+      const legacy = localStorage.getItem('schulte_state_v15') || localStorage.getItem('schulte_state_v14') || localStorage.getItem('schulte_state_v13');
+      if (legacy) raw = legacy;
+    }
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      state.history     = parsed.history     || [];
+      state.totalExp    = parsed.totalExp    || 0;
+      state.gender      = parsed.gender      || 'M';
+      state.theme       = parsed.theme       || 'dark';
+      state.baseColours = parsed.baseColours || { skinColour: '#d4a574', hairColour: '#3d2817', baseShirt: '#e6eaf2' };
+      state.baseStyles  = parsed.baseStyles  || { hair: 0 };
+      state.itemColours = parsed.itemColours || {};
+      state.equipped    = parsed.equipped    || { headwear: null, face: null, clothing: null, aura: null, effect: null };
+      state.unseenUnlocks = parsed.unseenUnlocks || [];
+      state.unseenToys  = parsed.unseenToys || [];
+      state.history.forEach(h => { if(h.legit === undefined) h.legit = true; });
+    }
+  } catch (e) {
+    console.warn('Could not load saved state:', e);
+  }
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      history: state.history, totalExp: state.totalExp, gender: state.gender, theme: state.theme,
+      baseColours: state.baseColours, baseStyles: state.baseStyles, itemColours: state.itemColours,
+      equipped: state.equipped, unseenUnlocks: state.unseenUnlocks, unseenToys: state.unseenToys
+    }));
+  } catch (e) {
+    console.warn('Save failed:', e);
+  }
+}
+
+function levelFromExp(exp) {
+  const level = Math.floor(exp / 100) + 1;
+  const currentInLevel = exp % 100;
+  return { level: Math.min(level, MAX_LEVEL), currentInLevel: level >= MAX_LEVEL ? 100 : currentInLevel, neededForNext: 100 };
+}
+
+function getTierThresholds(size) {
+  const factor = Math.pow((size * size) / 25, 0.85);
+  return { elite: 25 * factor, excellent: 32 * factor, average: 45 * factor };
+}
+
+function getTier(time, size) {
+  const t = getTierThresholds(size);
+  if (time < t.elite) return 'elite';
+  if (time < t.excellent) return 'excellent';
+  if (time < t.average) return 'average';
+  return 'beginner';
+}
+
+const TIER_LABELS = { elite: 'Elite', excellent: 'Excellent', average: 'Average', beginner: 'Needs Work' };
+const TIER_BASE_EXP = { elite: 80, excellent: 60, average: 40, beginner: 20 };
+
+function calculateExp(time, size, mode, isRecord, spatialDiff) {
+  const tier = getTier(time, size);
+  const base = TIER_BASE_EXP[tier];
+
+  let diffMultiplier = 3; 
+  if (spatialDiff > 3.2) diffMultiplier = 8; 
+  else if (spatialDiff < 2.5) diffMultiplier = 1; 
+
+  const mult = isRecord ? 2 : 1;
+  const timeBonus = Math.max(0, 50 - Math.floor(time));
+  const loyalty = Math.min(state.history.length, 100);
+
+  const finalExp = Math.floor(((base + timeBonus) * diffMultiplier * mult) + loyalty);
+  return { exp: finalExp, tier, multiplier: mult, diffMultiplier };
+}
+
+function generateSequence(mode, size) {
+  const total = size * size;
+  switch (mode) {
+    case 'classic': return Array.from({ length: total }, (_, i) => i + 1);
+    case 'reverse': return Array.from({ length: total }, (_, i) => total - i);
+    case 'timed':   return Array.from({ length: total }, (_, i) => i + 1);
+    case 'alphanumeric': {
+      const seq = [];
+      for (let i = 0; i < total; i++) {
+        seq.push(i % 2 === 0 ? Math.floor(i / 2) + 1 : String.fromCharCode(65 + Math.floor(i / 2)));
+      }
+      return seq;
+    }
+  }
+}
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const els = {
+  board: document.getElementById('board'), boardWrap: document.getElementById('boardWrap'),
+  newGameBtn: document.getElementById('newGameBtn'), restartBtn: document.getElementById('restartBtn'),
+  modeSelect: document.getElementById('modeSelect'), sizeSelect: document.getElementById('sizeSelect'),
+  timeLimitSelect: document.getElementById('timeLimitSelect'), timedLimitGroup: document.getElementById('timedLimitGroup'),
+  targetNum: document.getElementById('targetNum'), targetSub: document.getElementById('targetSub'),
+  timerDisplay: document.getElementById('timerDisplay'), timerSub: document.getElementById('timerSub'),
+  bestDisplay: document.getElementById('bestDisplay'), bestSub: document.getElementById('bestSub'),
+  errorDisplay: document.getElementById('errorDisplay'), resultCard: document.getElementById('resultCard'),
+  resultTime: document.getElementById('resultTime'), resultTier: document.getElementById('resultTier'),
+  resultExp: document.getElementById('resultExp'), levelDisplay: document.getElementById('levelDisplay'),
+  levelTierName: document.getElementById('levelTierName'), expBarFill: document.getElementById('expBarFill'),
+  expText: document.getElementById('expText'), characterSvg: document.getElementById('characterSvg'),
+  characterSvgLarge: document.getElementById('characterSvgLarge'), characterFrame: document.getElementById('characterFrame'),
+  genderToggleLarge: document.getElementById('genderToggleLarge'), visionCheat: document.getElementById('visionCheat'),
+  levelupToast: document.getElementById('levelupToast'), levelupTitle: document.getElementById('levelupTitle'),
+  levelupSub: document.getElementById('levelupSub'), focusBtn: document.getElementById('focusBtn'),
+  focusRestartBtn: document.getElementById('focusRestartBtn'), focusNewBtn: document.getElementById('focusNewBtn'),
+  nextIndicator: document.getElementById('nextIndicator'), nextIndicatorValue: document.getElementById('nextIndicatorValue'),
+  focusExitBtn: document.getElementById('focusExitBtn'), quickOverview: document.getElementById('quickOverview'),
+  qoTitle: document.getElementById('qoTitle'), qoStats: document.getElementById('qoStats'),
+  sessionModal: document.getElementById('sessionModal'), sessionModalClose: document.getElementById('sessionModalClose'),
+  smTitle: document.getElementById('smTitle'), smDate: document.getElementById('smDate'),
+  smTier: document.getElementById('smTier'), smTime: document.getElementById('smTime'),
+  smAvgClick: document.getElementById('smAvgClick'), smErrors: document.getElementById('smErrors'),
+  smDiff: document.getElementById('smDiff'), smPauses: document.getElementById('smPauses'),
+  smInsights: document.getElementById('smInsights'), legitModal: document.getElementById('legitModal'),
+  legitYesBtn: document.getElementById('legitYesBtn'), legitNoBtn: document.getElementById('legitNoBtn'),
+  reportModal: document.getElementById('reportModal'), reportOutput: document.getElementById('reportOutput'),
+  generateReportBtn: document.getElementById('generateReportBtn'), reportModalClose: document.getElementById('reportModalClose')
+};
+
+/* ============================ TOYBOX INTERACTIVES ============================ */
+
+function toggleAeroTheme() {
+    if (state.theme === 'aero') setTheme('dark');
+    else setTheme('aero');
+}
+
+function renderToybox(level) {
+    const container = document.getElementById('toyboxContainer');
+    if(!container) return;
+    
+    let html = '';
+    let hasAnyNew = false;
+    TOYS.forEach(toy => {
+        const unlocked = level >= toy.level;
+        const isNew = state.unseenToys && state.unseenToys.includes(toy.id);
+        if(isNew && unlocked) hasAnyNew = true;
+        html += `
+            <div class="toy-btn ${unlocked ? 'unlocked' : ''} ${isNew && unlocked ? 'shiny-new' : ''}" id="${toy.id}" onclick="handleToyClick('${toy.id}')">
+                ${toy.icon}
+                <div class="toy-tooltip">${unlocked ? toy.desc : `Unlocks at Level ${toy.level}`}</div>
+            </div>
+        `;
+    });
+    
+    if (hasAnyNew) {
+        html += `<div class="toy-try-me">✨ Try Me!</div>`;
+    }
+    container.innerHTML = html;
+}
+
+function handleToyClick(toyId) {
+    const toy = TOYS.find(t => t.id === toyId);
+    if (!toy) return;
+    
+    if (state.unseenToys && state.unseenToys.includes(toyId)) {
+        state.unseenToys = state.unseenToys.filter(id => id !== toyId);
+        saveState();
+        renderToybox(levelFromExp(state.totalExp).level);
+    }
+    
+    if (toy.action) toy.action();
+}
+
+function spawnBouncingOrb() {
+    const orb = document.createElement('div');
+    orb.style.position = 'fixed'; orb.style.width = '30px'; orb.style.height = '30px';
+    orb.style.borderRadius = '50%'; orb.style.background = 'radial-gradient(circle at 30% 30%, #fff, var(--tier-elite))';
+    orb.style.boxShadow = '0 0 20px var(--tier-elite)'; orb.style.zIndex = '9999';
+    document.body.appendChild(orb);
+
+    let x = Math.random() * (window.innerWidth - 30), y = Math.random() * (window.innerHeight - 30);
+    let vx = (Math.random() > 0.5 ? 1 : -1) * (4 + Math.random() * 4), vy = (Math.random() > 0.5 ? 1 : -1) * (4 + Math.random() * 4);
+    let life = 400;
+
+    function animate() {
+        x += vx; y += vy;
+        if (x <= 0 || x >= window.innerWidth - 30) vx *= -1;
+        if (y <= 0 || y >= window.innerHeight - 30) vy *= -1;
+        orb.style.left = x + 'px'; orb.style.top = y + 'px';
+        life--;
+        if (life > 0) requestAnimationFrame(animate);
+        else { orb.style.transition = 'opacity 1s'; orb.style.opacity = '0'; setTimeout(() => orb.remove(), 1000); }
+    }
+    animate();
+}
+
+function toggleCharacterDance() {
+    els.characterFrame.classList.add('dancing');
+    setTimeout(() => { els.characterFrame.classList.remove('dancing'); }, 3000);
+}
+
+function triggerExplosion() {
+    document.body.classList.add('shaking');
+    setTimeout(() => { document.body.classList.remove('shaking'); }, 800);
+    
+    const colors = ['#e11d48', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'];
+    for(let i=0; i<60; i++) {
+        const p = document.createElement('div');
+        p.style.position = 'fixed'; p.style.top = '50%'; p.style.left = '50%';
+        p.style.width = (Math.random() * 10 + 5) + 'px'; p.style.height = p.style.width;
+        p.style.background = colors[Math.floor(Math.random() * colors.length)];
+        p.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+        p.style.zIndex = '10000'; p.style.pointerEvents = 'none';
+        document.body.appendChild(p);
+        
+        const angle = Math.random() * Math.PI * 2;
+        const velocity = 10 + Math.random() * 30;
+        let vx = Math.cos(angle) * velocity;
+        let vy = Math.sin(angle) * velocity;
+        let op = 1;
+        
+        function anim() {
+            if(op <= 0) { p.remove(); return; }
+            let currentLeft = parseFloat(p.style.left) || (window.innerWidth / 2);
+            let currentTop = parseFloat(p.style.top) || (window.innerHeight / 2);
+            p.style.left = `${currentLeft + vx}px`;
+            p.style.top = `${currentTop + vy}px`;
+            vy += 0.5; // gravity
+            op -= 0.02;
+            p.style.opacity = op;
+            requestAnimationFrame(anim);
+        }
+        requestAnimationFrame(anim);
+    }
+}
+
+function spawnStickmanBattle() {
+    if(document.getElementById('stickman-arena')) return;
+    
+    const arena = document.createElement('div');
+    arena.id = 'stickman-arena';
+    arena.style.position = 'fixed'; arena.style.bottom = '20px'; arena.style.left = '50%';
+    arena.style.transform = 'translateX(-50%)'; arena.style.zIndex = '9999';
+    arena.style.width = '300px'; arena.style.height = '150px'; arena.style.pointerEvents = 'none';
+    
+    arena.innerHTML = `
+    <div style="position:absolute; top:0; left:10px; width:100px; height:6px; background:#334155; border-radius:3px; overflow:hidden;">
+        <div id="f1-hp" style="width:100%; height:100%; background:#0ea5e9; transition:width 0.2s;"></div>
+    </div>
+    <div style="position:absolute; top:0; right:10px; width:100px; height:6px; background:#334155; border-radius:3px; overflow:hidden;">
+        <div id="f2-hp" style="width:100%; height:100%; background:#e11d48; transition:width 0.2s; float:right;"></div>
+    </div>
+    <div id="bam-text" style="position:absolute; top:40px; left:50%; transform:translateX(-50%); font-family:monospace; font-weight:bold; font-size:24px; color:var(--gold); text-shadow:0 2px 4px rgba(0,0,0,0.8); opacity:0; transition:opacity 0.1s;">BAM!</div>
+    <svg width="100%" height="100%" viewBox="0 0 300 150">
+        <g id="fighter1" stroke="#0ea5e9" stroke-width="4" stroke-linecap="round" fill="none" style="transition: transform 0.2s linear;">
+            <circle cx="50" cy="50" r="12" fill="#0ea5e9"/> <line x1="50" y1="62" x2="50" y2="100"/>
+            <path id="f1-arms" d="M 30 75 L 50 70 L 70 75" /> <path id="f1-legs" d="M 35 140 L 50 100 L 65 140" />
+        </g>
+        <g id="fighter2" stroke="#e11d48" stroke-width="4" stroke-linecap="round" fill="none" style="transition: transform 0.2s linear;">
+            <circle cx="250" cy="50" r="12" fill="#e11d48"/> <line x1="250" y1="62" x2="250" y2="100"/>
+            <path id="f2-arms" d="M 230 75 L 250 70 L 270 75" /> <path id="f2-legs" d="M 235 140 L 250 100 L 265 140" />
+        </g>
+    </svg>`;
+    document.body.appendChild(arena);
+
+    const f1Arms = arena.querySelector('#f1-arms');
+    const f2Arms = arena.querySelector('#f2-arms');
+    const f1 = arena.querySelector('#fighter1');
+    const f2 = arena.querySelector('#fighter2');
+    const f1hpBar = arena.querySelector('#f1-hp');
+    const f2hpBar = arena.querySelector('#f2-hp');
+    const bam = arena.querySelector('#bam-text');
+
+    let f1X = 0, f2X = 0, hp1 = 100, hp2 = 100;
+    
+    const interval = setInterval(() => {
+        if (f1X < 80) f1X += Math.random() * 20;
+        if (f2X > -80) f2X -= Math.random() * 20;
+        
+        f1.style.transform = `translateX(${f1X}px)`;
+        f2.style.transform = `translateX(${f2X}px)`;
+
+        if (f1X > 60 && f2X < -60) {
+            const hit1 = Math.random() > 0.4;
+            const hit2 = Math.random() > 0.4;
+
+            if(hit1) {
+                f1Arms.setAttribute('d', 'M 30 60 L 50 70 L 90 60'); 
+                hp2 -= Math.floor(Math.random() * 20 + 10);
+            } else {
+                f1Arms.setAttribute('d', 'M 30 75 L 50 70 L 70 75'); 
+            }
+            
+            if(hit2) {
+                f2Arms.setAttribute('d', 'M 270 60 L 250 70 L 210 60'); 
+                hp1 -= Math.floor(Math.random() * 20 + 10);
+            } else {
+                f2Arms.setAttribute('d', 'M 230 75 L 250 70 L 270 75'); 
+            }
+
+            if(hit1 || hit2) {
+                const words = ["BAM!", "POW!", "WHACK!", "CRACK!"];
+                bam.textContent = words[Math.floor(Math.random() * words.length)];
+                bam.style.opacity = '1';
+                setTimeout(() => bam.style.opacity = '0', 200);
+            }
+        }
+
+        f1hpBar.style.width = Math.max(0, hp1) + '%';
+        f2hpBar.style.width = Math.max(0, hp2) + '%';
+
+        if (hp1 <= 0 || hp2 <= 0) {
+            clearInterval(interval);
+            if (hp1 <= 0) {
+                f1.style.transition = 'transform 0.5s ease-in';
+                f1.style.transform = `translate(${f1X - 20}px, 50px) rotate(-90deg)`;
+                f2.style.transform = `translate(${f2X}px, -30px)`; 
+            } else {
+                f2.style.transition = 'transform 0.5s ease-in';
+                f2.style.transform = `translate(${f2X + 20}px, 50px) rotate(90deg)`;
+                f1.style.transform = `translate(${f1X}px, -30px)`; 
+            }
+            setTimeout(() => {
+                arena.style.transition = 'opacity 1s';
+                arena.style.opacity = '0';
+                setTimeout(() => arena.remove(), 1000);
+            }, 2000);
+        }
+    }, 400);
+}
+
+/* ============================ CORE GAME LOGIC ============================ */
+
+function updateNextIndicator(text, pulse = false) {
+  if (!els.nextIndicatorValue) return;
+  els.nextIndicatorValue.textContent = text;
+  if (pulse) {
+    els.nextIndicator.classList.remove('pulse');
+    void els.nextIndicator.offsetWidth;
+    els.nextIndicator.classList.add('pulse');
+  }
+}
+
+function setIndicatorVisible(visible) {
+  els.nextIndicator.classList.toggle('visible', visible);
+}
+
+function calculateSpatialDifficulty(sequence, boardValues, size) {
+  const coords = {};
+  boardValues.forEach((val, idx) => {
+    coords[val] = { r: Math.floor(idx / size), c: idx % size };
+  });
+
+  let totalDistance = 0;
+  let validJumps = 0;
+  for (let i = 1; i < sequence.length; i++) {
+    const p1 = coords[sequence[i - 1]];
+    const p2 = coords[sequence[i]];
+    if (p1 && p2) {
+      totalDistance += Math.sqrt(Math.pow(p1.r - p2.r, 2) + Math.pow(p1.c - p2.c, 2));
+      validJumps++;
+    }
+  }
+  
+  const avgDist = validJumps > 0 ? (totalDistance / validJumps) : 2.5;
+  
+  let rating = 'Standard';
+  let mult = 'x3';
+  let color = 'var(--text-dim)';
+  
+  if (avgDist < 2.5) { 
+    rating = 'Clustered (Easy)'; mult = 'x1'; color = 'var(--tier-beginner)'; 
+  } else if (avgDist > 3.2) { 
+    rating = 'Scattered (Hard)'; mult = 'x8'; color = 'var(--tier-elite)'; 
+  } else { 
+    rating = 'Standard'; mult = 'x3'; color = 'var(--tier-excellent)'; 
+  }
+
+  const badge = document.getElementById('diffBadge');
+  if(badge) {
+     badge.textContent = rating;
+     badge.style.color = color;
+     badge.style.borderColor = color;
+  }
+  
+  const sdLabel = document.getElementById('sdLabel');
+  if(sdLabel) {
+      sdLabel.textContent = rating;
+      sdLabel.style.color = color;
+      document.getElementById('sdScore').textContent = avgDist.toFixed(2);
+      document.getElementById('sdMult').textContent = mult;
+  }
+
+  return avgDist;
+}
+
+function buildBoard(reshuffle = true) {
+  state.size = parseInt(els.sizeSelect.value);
+  state.mode = els.modeSelect.value;
+  state.timeLimit = parseInt(els.timeLimitSelect.value);
+  state.currentIndex = 0;
+  state.errors = 0;
+  state.isPlaying = false;
+  state.isGameOver = false;
+  state.latencies = [];
+  clearInterval(state.timerInterval);
+  clearInterval(state.countdownInterval);
+
+  state.sequence = generateSequence(state.mode, state.size);
+  if (reshuffle || state.boardValues.length !== state.size * state.size) {
+    state.boardValues = shuffleArray(state.sequence);
+  }
+
+  state.spatialDifficulty = calculateSpatialDifficulty(state.sequence, state.boardValues, state.size);
+
+  const baseMaxWidth = state.size <= 4 ? 380 : state.size === 5 ? 400 : state.size === 6 ? 430 : 460;
+  els.board.style.gridTemplateColumns = `repeat(${state.size}, 1fr)`;
+  els.board.style.maxWidth = baseMaxWidth + 'px';
+  els.board.innerHTML = '';
+  els.boardWrap.classList.remove('game-over');
+
+  const totalCells = state.size * state.size;
+  const centerIdx = Math.floor(totalCells / 2);
+
+  state.boardValues.forEach((val, idx) => {
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.textContent = val;
+    cell.dataset.val = val;
+    if (state.size % 2 !== 0 && idx === centerIdx) cell.classList.add('center-mark');
+    cell.addEventListener('click', () => handleClick(val, cell));
+    els.board.appendChild(cell);
+  });
+
+  els.targetNum.textContent = state.sequence[0];
+  els.targetSub.textContent = 'Click the next number';
+  els.timerDisplay.textContent = state.mode === 'timed' ? state.timeLimit.toFixed(2) : '0.00';
+  els.timerSub.textContent = state.mode === 'timed' ? 'seconds remaining' : 'seconds elapsed';
+  els.errorDisplay.textContent = '0';
+  updateBestDisplay();
+  updateNextIndicator(state.sequence[0], false);
+  setIndicatorVisible(true);
+}
+
+function handleClick(val, cell) {
+  if (state.isGameOver) return; 
+
+  const now = Date.now();
+  if (!state.isPlaying) {
+    state.isPlaying = true;
+    state.startTime = now;
+    state.lastClickTime = now;
+    if (state.mode === 'timed') {
+      state.countdownInterval = setInterval(updateCountdown, 50);
+    } else {
+      state.timerInterval = setInterval(updateTimer, 50);
+    }
+  }
+  
+  const expected = state.sequence[state.currentIndex];
+  if (String(val) === String(expected)) {
+    const latency = (now - state.lastClickTime) / 1000;
+    state.latencies.push(latency);
+    cell.dataset.latency = latency.toFixed(2); 
+    state.lastClickTime = now;
+
+    cell.classList.add('correct');
+    setTimeout(() => cell.classList.remove('correct'), 250);
+    state.currentIndex++;
+    
+    if (state.currentIndex >= state.sequence.length) {
+      endGame(true);
+    } else {
+      els.targetNum.textContent = state.sequence[state.currentIndex];
+      updateNextIndicator(state.sequence[state.currentIndex], true);
+    }
+  } else {
+    cell.classList.add('incorrect');
+    setTimeout(() => cell.classList.remove('incorrect'), 300);
+    state.errors++;
+    els.errorDisplay.textContent = state.errors;
+  }
+}
+
+function updateTimer() {
+  els.timerDisplay.textContent = ((Date.now() - state.startTime) / 1000).toFixed(2);
+}
+
+function updateCountdown() {
+  const elapsed = (Date.now() - state.startTime) / 1000;
+  const remaining = state.timeLimit - elapsed;
+  if (remaining <= 0) {
+    els.timerDisplay.textContent = '0.00';
+    endGame(false);
+    return;
+  }
+  els.timerDisplay.textContent = remaining.toFixed(2);
+}
+
+function updateBestDisplay() {
+  const matching = state.history.filter(h => h.mode === state.mode && h.size === state.size && h.completed && h.legit !== false);
+  if (matching.length === 0) {
+    els.bestDisplay.textContent = 'N/A';
+    els.bestSub.textContent = 'no records yet';
+    return;
+  }
+  if (state.mode === 'timed') {
+    const fullClears = matching.filter(h => h.fullClear);
+    if (fullClears.length > 0) {
+      els.bestDisplay.textContent = Math.min(...fullClears.map(h => h.time)).toFixed(2);
+      els.bestSub.textContent = 'fastest full clear';
+    } else {
+      els.bestDisplay.textContent = Math.max(...matching.map(h => h.numbersReached || 0));
+      els.bestSub.textContent = 'most numbers reached';
+    }
+  } else {
+    els.bestDisplay.textContent = Math.min(...matching.map(h => h.time)).toFixed(2);
+    els.bestSub.textContent = 'this mode + size';
+  }
+}
+
+function triggerQuickOverview(session) {
+    els.qoTitle.textContent = session.isRecord ? 'New Personal Best!' : 'Run Complete';
+    els.qoStats.innerHTML = `Time: <strong>${session.time.toFixed(2)}s</strong> &nbsp;|&nbsp; Errors: <strong>${session.errors}</strong> &nbsp;|&nbsp; XP: <strong style="color:var(--accent)">+${session.exp}</strong>`;
+    
+    els.quickOverview.classList.add('visible');
+    setTimeout(() => els.quickOverview.classList.remove('visible'), 2800);
+}
+
+function endGame(completed) {
+  clearInterval(state.timerInterval);
+  clearInterval(state.countdownInterval);
+  state.isPlaying = false;
+  state.isGameOver = true;
+  els.boardWrap.classList.add('game-over');
+
+  const elapsed = (Date.now() - state.startTime) / 1000;
+  if (state.mode === 'timed') handleTimedEnd(completed, elapsed);
+  else if (completed) handleStandardEnd(elapsed);
+}
+
+function handleStandardEnd(time) {
+  const prior = state.history.filter(h => h.mode === state.mode && h.size === state.size && h.completed && h.legit !== false);
+  const priorBest = prior.length > 0 ? Math.min(...prior.map(h => h.time)) : Infinity;
+  const isRecord = time < priorBest;
+  
+  const { exp, tier, multiplier, diffMultiplier } = calculateExp(time, state.size, state.mode, isRecord, state.spatialDifficulty);
+  state.pendingSession = { 
+    mode: state.mode, size: state.size, time, tier, exp,
+    errors: state.errors, completed: true, isRecord, multiplier, 
+    diffMultiplier, latencies: [...state.latencies], spatialDifficulty: state.spatialDifficulty,
+    sequence: [...state.sequence],
+    ts: Date.now() 
+  };
+  
+  els.legitModal.classList.add('visible');
+  els.targetNum.textContent = 'Done!';
+  els.targetSub.textContent = 'Click New Game';
+  setIndicatorVisible(false);
+}
+
+function handleTimedEnd(completed, elapsed) {
+  const numbersReached = state.currentIndex;
+  const totalNumbers = state.sequence.length;
+  const fullClear = completed && numbersReached === totalNumbers;
+  const time = fullClear ? elapsed : state.timeLimit;
+  const completionPct = numbersReached / totalNumbers;
+  let exp, tier, diffMultiplier = 1;
+  
+  if (fullClear) {
+    const r = calculateExp(elapsed, state.size, state.mode, false, state.spatialDifficulty);
+    exp = r.exp; tier = r.tier; diffMultiplier = r.diffMultiplier;
+  } else {
+    if (completionPct >= 0.9) { exp = 40; tier = 'excellent'; }
+    else if (completionPct >= 0.7) { exp = 25; tier = 'average'; }
+    else if (completionPct >= 0.4) { exp = 10; tier = 'beginner'; }
+    else { exp = 5; tier = 'beginner'; }
+  }
+  
+  const prior = state.history.filter(h => h.mode === 'timed' && h.size === state.size && h.legit !== false);
+  let isRecord = false, multiplier = 1;
+  
+  if (fullClear) {
+    const priorClears = prior.filter(h => h.fullClear);
+    const priorBest = priorClears.length > 0 ? Math.min(...priorClears.map(h => h.time)) : Infinity;
+    if (elapsed < priorBest) {
+      isRecord = true;
+      multiplier = TIER_RECORD_MULT[tier] || 1;
+      exp = Math.round(exp * multiplier);
+    }
+  } else {
+    const priorMax = prior.length > 0 ? Math.max(...prior.map(h => h.numbersReached || 0)) : 0;
+    if (numbersReached > priorMax && numbersReached >= 5) {
+      isRecord = true; multiplier = 2; exp = Math.round(exp * multiplier);
+    }
+  }
+  
+  state.pendingSession = { 
+    mode: 'timed', size: state.size, time, tier, exp,
+    errors: state.errors, completed: true, fullClear,
+    numbersReached, totalNumbers, timeLimit: state.timeLimit,
+    isRecord, multiplier, diffMultiplier, latencies: [...state.latencies], spatialDifficulty: state.spatialDifficulty,
+    sequence: [...state.sequence],
+    ts: Date.now() 
+  };
+  
+  els.legitModal.classList.add('visible');
+  els.targetNum.textContent = fullClear ? 'Done!' : 'Time up';
+  els.targetSub.textContent = 'Click New Game';
+  setIndicatorVisible(false);
+}
+
+function processPendingSession(isLegit) {
+  if(!state.pendingSession) return;
+  els.legitModal.classList.remove('visible');
+  
+  state.pendingSession.legit = isLegit;
+  if(!isLegit) {
+      state.pendingSession.exp = Math.floor(state.pendingSession.exp * 0.75);
+      state.pendingSession.isRecord = false; 
+  }
+  
+  recordSession(state.pendingSession);
+  
+  if (state.pendingSession.mode === 'timed') showTimedResult(state.pendingSession);
+  else showResult(state.pendingSession);
+  
+  triggerQuickOverview(state.pendingSession);
+  state.pendingSession = null;
+}
+
+els.legitYesBtn.addEventListener('click', () => processPendingSession(true));
+els.legitNoBtn.addEventListener('click', () => processPendingSession(false));
+
+els.legitModal.addEventListener('click', (e) => {
+    if (e.target === els.legitModal && state.pendingSession) {
+        processPendingSession(true);
+    }
+});
+
+function recordSession(session) {
+  state.history.unshift(session);
+  if (state.history.length > 1000) state.history = state.history.slice(0, 1000);
+  const beforeLevel = levelFromExp(state.totalExp).level;
+  state.totalExp += session.exp;
+  const afterLevel = levelFromExp(state.totalExp).level;
+  saveState();
+  updateLevelDisplay();
+  updateBestDisplay();
+  
+  setTimeout(() => spawnXpBurst(session.exp, session.legit ? session.tier : 'penalty'), 80);
+  
+  if (afterLevel > beforeLevel) {
+    // Check for unlocks
+    const newUnlocks = UNLOCKS.filter(u => u.level > beforeLevel && u.level <= afterLevel);
+    if (newUnlocks.length > 0) {
+      const last = newUnlocks[newUnlocks.length - 1];
+      showLevelupToast(`Level ${afterLevel} reached`, `Unlocked: ${last.name}`);
+      newUnlocks.forEach(u => {
+          if (state.unseenUnlocks && !state.unseenUnlocks.includes(u.key)) state.unseenUnlocks.push(u.key);
+      });
+    } else {
+      showLevelupToast(`Level ${afterLevel} reached`, getTierName(afterLevel));
+    }
+    
+    // Check for toys
+    const newToys = TOYS.filter(t => t.level > beforeLevel && t.level <= afterLevel);
+    if (newToys.length > 0) {
+        newToys.forEach(t => {
+            if (state.unseenToys && !state.unseenToys.includes(t.id)) state.unseenToys.push(t.id);
+        });
+    }
+    
+    saveState();
+    renderToybox(afterLevel);
+    renderUnlocksGrid(afterLevel);
+    renderRewardsTab();
+  }
+}
+
+function showLevelupToast(title, sub) {
+  els.levelupTitle.textContent = title;
+  els.levelupSub.textContent = sub;
+  els.levelupToast.classList.add('visible');
+  clearTimeout(showLevelupToast._t);
+  showLevelupToast._t = setTimeout(() => {
+    els.levelupToast.classList.remove('visible');
+  }, 3500);
+  els.characterFrame.style.boxShadow = '0 0 0 3px var(--gold), 0 0 32px -4px var(--gold)';
+  setTimeout(() => { els.characterFrame.style.boxShadow = ''; }, 1200);
+}
+
+function spawnXpBurst(amount, tier, originX, originY) {
+  if (originX == null || originY == null) {
+    const boardEl = document.getElementById('board');
+    if (boardEl) {
+      const r = boardEl.getBoundingClientRect();
+      originX = r.left + r.width / 2;
+      originY = r.top + r.height / 2;
+    } else {
+      originX = window.innerWidth / 2;
+      originY = window.innerHeight / 2;
+    }
+  }
+
+  const colourClass = tier === 'elite' ? 'purple' : tier === 'excellent' ? '' : tier === 'average' ? 'gold' : tier === 'penalty' ? 'penalty' : '';
+
+  const particle = document.createElement('div');
+  particle.className = 'xp-particle ' + colourClass;
+  particle.textContent = '+' + amount + ' XP';
+  particle.style.left = originX + 'px';
+  particle.style.top = originY + 'px';
+  document.body.appendChild(particle);
+  setTimeout(() => particle.remove(), 1500);
+
+  if (tier !== 'penalty') {
+      const sparkleCount = tier === 'elite' ? 14 : tier === 'excellent' ? 10 : 6;
+      for (let i = 0; i < sparkleCount; i++) {
+        const s = document.createElement('div');
+        s.className = 'sparkle ' + colourClass;
+        s.style.left = (originX - 3) + 'px';
+        s.style.top = (originY - 3) + 'px';
+        const angle = (Math.PI * 2 * i) / sparkleCount + Math.random() * 0.4;
+        const distance = 60 + Math.random() * 50;
+        const dx = Math.cos(angle) * distance;
+        const dy = Math.sin(angle) * distance;
+        s.style.transition = 'all 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+        document.body.appendChild(s);
+        requestAnimationFrame(() => {
+          s.style.transform = `translate(${dx}px, ${dy}px) scale(0.2)`;
+          s.style.opacity = '0';
+        });
+        setTimeout(() => s.remove(), 1000);
+      }
+  }
+
+  els.expBarFill.classList.remove('gaining');
+  void els.expBarFill.offsetWidth;
+  els.expBarFill.classList.add('gaining');
+}
+
+function toggleFocusMode(force) {
+  state.focus = (force !== undefined) ? force : !state.focus;
+  document.body.classList.toggle('focus', state.focus);
+  
+  if (state.focus) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelector('.tab[data-tab="play"]').classList.add('active');
+    document.getElementById('view-play').classList.add('active');
+  }
+}
+
+function showResult(session) {
+  els.resultCard.classList.add('visible');
+  els.resultTime.textContent = session.time.toFixed(2) + 's';
+  els.resultTier.className = 'result-tier tier-' + session.tier;
+  els.resultTier.textContent = TIER_LABELS[session.tier];
+  
+  let html = `<div style="width:100%; margin-bottom:8px;">Base XP: ${TIER_BASE_EXP[session.tier] || 0} &times; Diff: x${session.diffMultiplier} <span style="margin:0 8px; color:var(--border-strong)">|</span> <strong>Total: +${session.exp} XP</strong></div>`;
+  
+  if(!session.legit) html += `<div style="color:var(--gold);font-size:11px;width:100%">Drift Penalty Applied (-25% XP)</div>`;
+  if (session.isRecord) html += `<div class="multiplier-badge">★ NEW RECORD x${session.multiplier}</div>`;
+  if (session.errors > 0) html += `<div>Errors: ${session.errors}</div>`;
+  els.resultExp.innerHTML = html;
+}
+
+function showTimedResult(session) {
+  els.resultCard.classList.add('visible');
+  els.resultTime.textContent = session.fullClear ? session.time.toFixed(2) + 's' : `${session.numbersReached} / ${session.totalNumbers}`;
+  els.resultTier.className = 'result-tier tier-' + session.tier;
+  els.resultTier.textContent = session.fullClear ? TIER_LABELS[session.tier] : 'Partial';
+  
+  let html = `<div style="width:100%; margin-bottom:8px;">Base XP: ${TIER_BASE_EXP[session.tier] || 0} &times; Diff: x${session.diffMultiplier} <span style="margin:0 8px; color:var(--border-strong)">|</span> <strong>Total: +${session.exp} XP</strong></div>`;
+  
+  if(!session.legit) html += `<div style="color:var(--gold);font-size:11px;width:100%">Drift Penalty Applied (-25% XP)</div>`;
+  if (session.isRecord) {
+    const label = session.fullClear ? 'NEW RECORD' : 'NEW HIGH';
+    html += `<div class="multiplier-badge">★ ${label} x${session.multiplier}</div>`;
+  }
+  if (session.errors > 0) html += `<div>Errors: ${session.errors}</div>`;
+  els.resultExp.innerHTML = html;
+}
+
+function updateLevelDisplay() {
+  try {
+      const { level, currentInLevel, neededForNext } = levelFromExp(state.totalExp);
+      els.levelDisplay.textContent = level;
+      els.levelDisplay.classList.toggle('maxed', level >= MAX_LEVEL);
+      els.levelTierName.textContent = getTierName(level);
+      const pct = level >= MAX_LEVEL ? 100 : (currentInLevel / neededForNext) * 100;
+      els.expBarFill.style.width = pct + '%';
+      els.expText.textContent = level >= MAX_LEVEL ? 'MAX LEVEL' : `${currentInLevel} / ${neededForNext} XP`;
+
+      els.characterFrame.classList.toggle('high-tier', level >= 50);
+      
+      renderToybox(level);
+
+      const charSvg = buildCharacterSvg(level, state.gender);
+      els.characterSvg.innerHTML = charSvg;
+      if (els.characterSvgLarge) els.characterSvgLarge.innerHTML = charSvg;
+
+      const charLevel = document.getElementById('charLevel');
+      if (charLevel) {
+        charLevel.textContent = 'Level ' + level;
+        document.getElementById('charTierName').textContent = getTierName(level);
+        document.getElementById('charExpFill').style.width = pct + '%';
+        document.getElementById('charExpCurrent').textContent = level >= MAX_LEVEL ? 'MAX' : (currentInLevel + ' XP');
+        document.getElementById('charExpNext').textContent = level >= MAX_LEVEL ? '' : ('/ ' + neededForNext + ' XP');
+
+        const pill = document.getElementById('charPill');
+        if (pill) pill.textContent = `Level ${level} · ${getTierName(level)}`;
+
+        renderBaseCustomisation();
+        renderUnlocksGrid(level);
+        renderRewardsTab();
+      }
+  } catch(e) {
+      console.warn("Recovered from level display logic error:", e);
+  }
+}
+
+function renderBaseCustomisation() {
+    const skinPicker = document.getElementById('picker-skin');
+    if (skinPicker) {
+        skinPicker.value = state.baseColours.skinColour || '#d4a574';
+        skinPicker.onchange = (e) => { state.baseColours.skinColour = e.target.value; saveState(); updateLevelDisplay(); };
+    }
+    
+    const hairPicker = document.getElementById('picker-hair');
+    if (hairPicker) {
+        hairPicker.value = state.baseColours.hairColour || '#3d2817';
+        hairPicker.onchange = (e) => { state.baseColours.hairColour = e.target.value; saveState(); updateLevelDisplay(); };
+    }
+    
+    const shirtPicker = document.getElementById('picker-shirt');
+    if (shirtPicker) {
+        shirtPicker.value = state.baseColours.baseShirt || '#e6eaf2';
+        shirtPicker.onchange = (e) => { state.baseColours.baseShirt = e.target.value; saveState(); updateLevelDisplay(); };
+    }
+    
+    const hairStylePicker = document.getElementById('hairStylePicker');
+    if(hairStylePicker) {
+        hairStylePicker.value = state.baseStyles.hair;
+        hairStylePicker.onchange = (e) => { state.baseStyles.hair = e.target.value; saveState(); updateLevelDisplay(); };
+    }
+}
+
+function toggleEquip(category, key) {
+    if (key !== null && state.unseenUnlocks && state.unseenUnlocks.includes(key)) {
+        state.unseenUnlocks = state.unseenUnlocks.filter(k => k !== key);
+    }
+    
+    if (key === null || (state.equipped && state.equipped[category] === key)) {
+        state.equipped[category] = null; 
+    } else {
+        state.equipped[category] = key;
+    }
+    saveState();
+    updateLevelDisplay();
+}
+
+function updateItemColour(key, colour) {
+    if (state.unseenUnlocks && state.unseenUnlocks.includes(key)) {
+        state.unseenUnlocks = state.unseenUnlocks.filter(k => k !== key);
+    }
+    state.itemColours[key] = colour;
+    saveState();
+    updateLevelDisplay();
+}
+
+function renderUnlocksGrid(level) {
+  try {
+      const container = document.getElementById('unlocksCategories');
+      if (!container) return;
+
+      const categories = ['headwear', 'face', 'clothing', 'effect', 'aura'];
+      let html = '';
+
+      categories.forEach(cat => {
+          const items = UNLOCKS.filter(u => u.category === cat);
+          if (items.length === 0) return;
+          
+          html += `<div class="equip-category-title">${cat}</div><div class="unlocks-grid">`;
+          
+          const isNoneEquipped = !state.equipped || !state.equipped[cat];
+          html += `
+            <div class="unlock achieved ${isNoneEquipped ? 'equipped' : ''}" onclick="toggleEquip('${cat}', null)" style="border-style: dashed;">
+              <div class="unlock-info">
+                <span class="unlock-name">None</span>
+                <span style="font-size:10px; color:var(--text-faint); margin-top:2px;">${isNoneEquipped ? 'Equipped' : 'Click to unequip'}</span>
+              </div>
+            </div>
+          `;
+          
+          items.forEach(u => {
+              const achieved = level >= u.level;
+              const equipped = state.equipped && state.equipped[cat] === u.key;
+              const currentColour = (state.itemColours && state.itemColours[u.key]) ? state.itemColours[u.key] : u.defaultColour;
+              const isNew = state.unseenUnlocks && state.unseenUnlocks.includes(u.key);
+              
+              if (!achieved) {
+                  html += `
+                    <div class="unlock">
+                      <div class="unlock-info">
+                        <span class="unlock-level">L${u.level}</span>
+                        <span class="unlock-name">${u.name}</span>
+                      </div>
+                    </div>
+                  `;
+              } else {
+                  html += `
+                    <div class="unlock achieved ${equipped ? 'equipped' : ''} ${isNew && !equipped ? 'shiny-new' : ''}" onclick="toggleEquip('${cat}', '${u.key}')">
+                      <div class="unlock-info">
+                        <span class="unlock-name">${u.name}</span>
+                        <span style="font-size:10px; color:var(--text-faint); margin-top:2px;">${equipped ? 'Equipped' : 'Click to equip'}</span>
+                      </div>
+                      <div class="colour-picker-wrap" onclick="event.stopPropagation()">
+                          <input type="color" value="${currentColour}" class="colour-picker-btn" onchange="updateItemColour('${u.key}', this.value)" title="Change item colour">
+                      </div>
+                    </div>
+                  `;
+              }
+          });
+          html += `</div>`;
+      });
+
+      container.innerHTML = html;
+  } catch(e) {
+      console.warn("Unlocks rendering error:", e);
+  }
+}
+
+function renderRewardsTab() {
+    const rewardsList = document.getElementById('rewardsList');
+    if(!rewardsList) return;
+    const currentLevel = levelFromExp(state.totalExp).level;
+    
+    const allRewards = [...UNLOCKS.map(u => ({...u, type: 'Wardrobe'})), ...TOYS.map(t => ({...t, type: 'Toybox'}))];
+    allRewards.sort((a, b) => a.level - b.level);
+    
+    let html = '';
+    allRewards.forEach(r => {
+        const unlocked = currentLevel >= r.level;
+        html += `
+            <div class="reward-row ${unlocked ? '' : 'locked'}">
+                <div class="r-level">L${r.level}</div>
+                <div class="r-details">
+                    <div class="r-title">${r.icon || '✨'} ${r.name}</div>
+                    <div class="r-sub">${r.desc}</div>
+                </div>
+                <div class="r-type">${r.type}</div>
+            </div>
+        `;
+    });
+    
+    rewardsList.innerHTML = html;
+}
+
+function openSessionModalByTs(ts) {
+  const s = state.history.find(h => h.ts === ts);
+  if (!s) return;
+  
+  const date = new Date(s.ts);
+  els.smDate.textContent = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  els.smTitle.textContent = `${s.mode.charAt(0).toUpperCase() + s.mode.slice(1)} · ${s.size}x${s.size}`;
+  
+  els.smTier.className = 'result-tier tier-' + s.tier;
+  els.smTier.textContent = TIER_LABELS[s.tier] || s.tier;
+  
+  els.smTime.textContent = s.time.toFixed(2) + 's';
+  els.smErrors.textContent = s.errors || 0;
+  
+  const avgClick = s.latencies && s.latencies.length ? (s.time / s.latencies.length).toFixed(2) : 'N/A';
+  els.smAvgClick.textContent = avgClick !== 'N/A' ? avgClick + 's' : 'N/A';
+  
+  const diff = s.spatialDifficulty ? s.spatialDifficulty.toFixed(2) : 'N/A';
+  els.smDiff.textContent = diff;
+
+  const pastSessions = state.history.filter(h => h.ts <= ts && h.mode === s.mode && h.size === s.size && h.completed && h.legit !== false);
+  let histAvg = 'N/A';
+  if (pastSessions.length > 1) {
+      const prior = pastSessions.filter(h => h.ts < ts);
+      if (prior.length > 0) {
+          histAvg = (prior.reduce((acc, h) => acc + h.time, 0) / prior.length).toFixed(2);
+      }
+  }
+
+  let insightsHtml = '';
+  if (s.legit === false) {
+      insightsHtml += `<p style="margin-bottom:12px; color:var(--gold);"><strong>This was flagged as a practice/drift run.</strong> This performance is excluded from your core analytics to preserve the purity of your peripheral progression data.</p>`;
+  } else {
+      if (s.latencies && s.latencies.length > 0) {
+          const maxPause = Math.max(...s.latencies);
+          const avgPause = s.time / s.latencies.length;
+          
+          if (maxPause > avgPause * 2.5 && maxPause > 2.0) {
+              insightsHtml += `<p style="margin-bottom:12px; color:var(--accent);">You had a long pause of <strong>${maxPause.toFixed(1)}s</strong> searching for a number, but you successfully maintained your central focus. Many people break their peripheral lock and scan manually here. Excellent mental control.</p>`;
+          } else {
+               insightsHtml += `<p style="margin-bottom:12px">Your clicking rhythm was highly consistent. Good peripheral locking.</p>`;
+          }
+      }
+
+      if (histAvg !== 'N/A') {
+          const timeDiff = (s.time - histAvg).toFixed(2);
+          const comp = timeDiff < 0 ? 'faster' : 'slower';
+          insightsHtml += `<p>Your performance here was <strong>${s.time.toFixed(2)}s</strong>. This is <strong>${Math.abs(timeDiff)}s ${comp}</strong> than your average at the time which was <strong>${histAvg}s</strong>.</p>`;
+      } else {
+          insightsHtml += `<p>This was your first recorded legitimate session for this configuration.</p>`;
+      }
+  }
+  els.smInsights.innerHTML = insightsHtml;
+  
+  els.smPauses.innerHTML = '';
+  if (s.latencies && s.latencies.length > 0) {
+    let pauses = s.latencies.map((lat, idx) => {
+        const num = s.sequence ? s.sequence[idx] : (idx + 1); 
+        return { num, lat };
+    });
+    pauses.sort((a,b) => b.lat - a.lat);
+    const top5 = pauses.slice(0, 5);
+    
+    els.smPauses.innerHTML = top5.map((p, i) => `
+        <li style="display:flex; justify-content:space-between; margin-bottom:6px; padding-bottom:6px; border-bottom:1px solid var(--border)">
+          <span>#${i+1} Pause (Searching for <strong>${p.num}</strong>)</span>
+          <span style="color:var(--accent); font-weight:600;">${p.lat.toFixed(2)}s</span>
+        </li>
+    `).join('');
+  } else {
+    els.smPauses.innerHTML = '<li>No pause data recorded for this session.</li>';
+  }
+  
+  els.sessionModal.classList.add('visible');
+}
+
+els.sessionModalClose.addEventListener('click', () => els.sessionModal.classList.remove('visible'));
+els.sessionModal.addEventListener('click', (e) => {
+  if (e.target === els.sessionModal) els.sessionModal.classList.remove('visible');
+});
+
+els.generateReportBtn.addEventListener('click', () => {
+    try {
+        const timeFiltered = state.history.filter(h => (h.mode === 'timed' ? h.fullClear : h.completed) && h.legit !== false);
+        if (timeFiltered.length < 10) {
+            els.reportOutput.innerHTML = "Not enough legitimate data to generate a meaningful report. Play at least 10 pure central-focus games.";
+            els.reportModal.classList.add('visible');
+            return;
+        }
+
+        const chronological = timeFiltered.slice().reverse();
+        
+        const first20PercentIndex = Math.max(5, Math.floor(chronological.length * 0.2));
+        const last20PercentIndex = Math.max(5, Math.floor(chronological.length * 0.2));
+        
+        const firstGames = chronological.slice(0, first20PercentIndex);
+        const recentGames = chronological.slice(-last20PercentIndex);
+        
+        const firstAvg = firstGames.reduce((s, h) => s + h.time, 0) / firstGames.length;
+        const recentAvg = recentGames.reduce((s, h) => s + h.time, 0) / recentGames.length;
+        const improvement = ((firstAvg - recentAvg) / firstAvg) * 100;
+        
+        const startDate = new Date(chronological[0].ts).toLocaleDateString();
+        const endDate = new Date(chronological[chronological.length-1].ts).toLocaleDateString();
+
+        const report = `PERFORMANCE ANALYSIS REPORT\n===========================\nDate Range: ${startDate} to ${endDate}\nTotal Valid Sessions: ${chronological.length}\n\nPROGRESSION METRICS\n---------------------------\nInitial Baseline (First ${first20PercentIndex} games): ${firstAvg.toFixed(2)}s average\nRecent Baseline (Last ${last20PercentIndex} games): ${recentAvg.toFixed(2)}s average\nOverall Shift: ${Math.abs(improvement).toFixed(1)}% ${improvement > 0 ? 'Faster (Improvement)' : 'Slower (Regression)'}\n\nCONSISTENCY ANALYSIS\n---------------------------\n${generateConsistencyStatement(chronological)}\n\nOBSERVATIONS\n---------------------------\n${improvement > 5 ? "Your peripheral spanning has widened significantly since your first sessions. You are requiring fewer eye fixations to locate targets." : improvement < -5 ? "Your times have regressed. Ensure you aren't rushing, as forcing speed often leads to eye darting, which breaks the training mechanism." : "Your performance has stabilised. To push past this plateau, force yourself to hold the absolute centre even if it slows your times down initially."}`;
+
+        els.reportOutput.innerHTML = report;
+        els.reportModal.classList.add('visible');
+    } catch(e) {
+        console.warn("Report generation failed:", e);
+        els.reportOutput.innerHTML = "An error occurred while generating the report. Need more formatted session data.";
+        els.reportModal.classList.add('visible');
+    }
+});
+
+function generateConsistencyStatement(sessions) {
+    const errorAvg = sessions.reduce((s, h) => s + (h.errors || 0), 0) / sessions.length;
+    if (errorAvg > 1.5) return "High error rate indicates you may be guessing or skimming rather than processing the grid cleanly.";
+    if (errorAvg < 0.5) return "Excellent accuracy. Your visual memory and tracking remain clean under pressure.";
+    return "Standard error rate. Focus on accuracy before speed.";
+}
+
+els.reportModalClose.addEventListener('click', () => els.reportModal.classList.remove('visible'));
+els.reportModal.addEventListener('click', (e) => {
+    if(e.target === els.reportModal) els.reportModal.classList.remove('visible');
+});
+
+function renderAnalytics() {
+  try {
+      const modeFilter = document.getElementById('analyticsMode').value;
+      const sizeFilter = document.getElementById('analyticsSize').value;
+      
+      let filtered = state.history.filter(h => h.legit !== false);
+      
+      if (modeFilter !== 'all') filtered = filtered.filter(h => h.mode === modeFilter);
+      if (sizeFilter !== 'all') filtered = filtered.filter(h => h.size === parseInt(sizeFilter));
+
+      const timeFiltered = filtered.filter(h => (h.mode === 'timed' ? h.fullClear : h.completed));
+      document.getElementById('aTotal').textContent = filtered.length;
+
+      let recentAvg = null, priorAvg = null, change = null;
+      if (timeFiltered.length > 0) {
+        const best = Math.min(...timeFiltered.map(h => h.time));
+        const avg = timeFiltered.reduce((s, h) => s + h.time, 0) / timeFiltered.length;
+        document.getElementById('aBest').textContent = best.toFixed(2) + 's';
+        document.getElementById('aAvg').textContent = avg.toFixed(2) + 's';
+      } else {
+        document.getElementById('aBest').textContent = 'N/A';
+        document.getElementById('aAvg').textContent = 'N/A';
+      }
+
+      const chronological = timeFiltered.slice().reverse();
+      if (chronological.length >= 4) {
+        const splitPoint = Math.min(5, Math.floor(chronological.length / 2));
+        const recent = chronological.slice(-splitPoint);
+        const prior = chronological.slice(-splitPoint * 2, -splitPoint);
+        if (prior.length > 0) {
+          recentAvg = recent.reduce((s, h) => s + h.time, 0) / recent.length;
+          priorAvg = prior.reduce((s, h) => s + h.time, 0) / prior.length;
+          change = ((recentAvg - priorAvg) / priorAvg) * 100;
+          const arrow = change < -2 ? '↓' : change > 2 ? '↑' : '→';
+          const color = change < -2 ? 'var(--accent)' : change > 2 ? 'var(--error)' : 'var(--text-dim)';
+          document.getElementById('aTrend').innerHTML = `<span style="color:${color}">${arrow} ${Math.abs(change).toFixed(1)}%</span>`;
+          document.getElementById('aTrendSub').textContent = change < 0 ? 'getting faster' : change > 0 ? 'getting slower' : 'steady';
+        }
+      } else {
+        document.getElementById('aTrend').textContent = 'N/A';
+        document.getElementById('aTrendSub').textContent = 'need more sessions';
+      }
+
+      renderInsights(filtered, timeFiltered);
+      drawTrendChart(chronological.slice(-30));
+      renderTierBreakdown(filtered);
+      renderTopScores(timeFiltered);
+      renderSessionList(filtered.slice(0, 15));
+  } catch(e) {
+      console.warn("Analytics rendering recovered from error:", e);
+  }
+}
+
+function renderTopScores(timeFiltered) {
+  const list = document.getElementById('topScoresList');
+  if (!list) return;
+  
+  if (timeFiltered.length === 0) {
+    list.innerHTML = '<li><div class="empty-state">No completed legitimate sessions yet.</div></li>';
+    return;
+  }
+
+  const sorted = [...timeFiltered].sort((a, b) => a.time - b.time);
+  const top5 = sorted.slice(0, 5);
+  const colors = { elite: 'var(--tier-elite)', excellent: 'var(--tier-excellent)', average: 'var(--tier-average)', beginner: 'var(--tier-beginner)' };
+  const modeLabels = { classic: 'Classic', reverse: 'Reverse', alphanumeric: 'Alpha', timed: 'Timed' };
+
+  list.innerHTML = top5.map((s, i) => {
+    const date = new Date(s.ts).toLocaleDateString();
+    return `
+      <li class="session-row" data-ts="${s.ts}">
+        <span class="session-num" style="color:var(--gold); font-weight:bold;">#${i + 1}</span>
+        <span>
+          <span class="tier-dot" style="background:${colors[s.tier] || 'var(--text-faint)'}"></span>
+          ${modeLabels[s.mode] || s.mode} · ${s.size}x${s.size}
+          <div class="session-meta">${date}</div>
+        </span>
+        <span class="session-time" style="color:var(--accent)">${s.time.toFixed(2)}s</span>
+      </li>
+    `;
+  }).join('');
+
+  list.querySelectorAll('.session-row').forEach(row => {
+    row.addEventListener('click', () => openSessionModalByTs(parseInt(row.dataset.ts)));
+  });
+}
+
+function renderInsights(filtered, timeFiltered) {
+  const container = document.getElementById('insightContainer');
+  if (!container) return;
+  
+  const insights = [];
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div class="insight-card neutral"><div class="insight-title">No data yet</div><div class="insight-body">Play some games to start seeing insights about your progress.</div></div>`;
+    return;
+  }
+
+  if (timeFiltered.length > 0) {
+    const latest = timeFiltered[0];
+    const previousRuns = timeFiltered.slice(1);
+
+    if (previousRuns.length === 0) {
+      insights.push({ type: 'neutral', title: 'Baseline Established', body: 'First run on record for this configuration. Focus on accuracy over speed for now.' });
+    } else {
+      const histAvg = previousRuns.reduce((s, h) => s + h.time, 0) / previousRuns.length;
+      const diff = histAvg - latest.time;
+      const pctChange = Math.abs((diff / histAvg) * 100).toFixed(1);
+
+      if (diff > 0) {
+         insights.push({ type: 'achievement', title: 'Fantastic Job!', body: `You outperformed your historical average by ${pctChange}%. Keep locking that central focus.` });
+      } else {
+         insights.push({ type: 'warning', title: 'Slight Regression', body: `A bit slower this time, trailing your average by ${pctChange}%. Ensure you aren't manually scanning the grid.` });
+      }
+    }
+
+    if (latest.latencies && latest.latencies.length > 0) {
+      const maxDelay = Math.max(...latest.latencies);
+      const avgDelay = latest.time / latest.latencies.length;
+      if (maxDelay > avgDelay * 2.5 && maxDelay > 2.0 && latest.tier !== 'elite') {
+         insights.push({
+          type: 'achievement',
+          title: 'Impressive Discipline',
+          body: `You had a long pause of <strong>${maxDelay.toFixed(1)}s</strong> at one point, but you maintained your central focus. Many people shift their eyes to manually scan when stuck. Excellent peripheral lock.`
+        });
+      }
+    }
+  }
+
+  if (timeFiltered.length >= 5) {
+    const avgErrors = filtered.reduce((s, h) => s + (h.errors || 0), 0) / filtered.length;
+    if (avgErrors > 2) {
+      insights.push({
+        type: 'warning',
+        title: `Average ${avgErrors.toFixed(1)} misclicks per run`,
+        body: `Errors usually mean you are skimming the grid rather than reading it. Slow down slightly. Times follow accuracy, not the other way around.`,
+      });
+    } else if (avgErrors < 0.3 && timeFiltered.length >= 10) {
+      insights.push({
+        type: 'achievement',
+        title: 'Near-zero error rate',
+        body: `Across ${timeFiltered.length} runs you average ${avgErrors.toFixed(2)} errors. That is the hallmark of clean visual tracking, not just fast reflexes.`,
+      });
+    }
+  }
+
+  if (insights.length === 0) {
+    insights.push({ type: 'neutral', title: 'Keep going', body: 'A few more sessions and meaningful trends will start showing here.' });
+  }
+
+  const typeMap = { achievement: 'achievement', warning: 'warning', neutral: 'neutral', danger: 'danger' };
+  container.innerHTML = insights.map(i => `
+    <div class="insight-card ${typeMap[i.type]}">
+      <div class="insight-title">${i.title}</div>
+      <div class="insight-body">${i.body}</div>
+    </div>
+  `).join('');
+}
+
+function drawTrendChart(sessions) {
+  const canvas = document.getElementById('trendChart');
+  if (!canvas) return;
+  
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  
+  if (rect.width === 0) return;
+  
+  canvas.width = rect.width * dpr;
+  canvas.height = 180 * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = '180px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  ctx.clearRect(0, 0, rect.width, 180);
+
+  const cs = getComputedStyle(document.body);
+  const accentColor = cs.getPropertyValue('--accent').trim();
+  const borderColor = cs.getPropertyValue('--border').trim();
+  const textFaint = cs.getPropertyValue('--text-faint').trim() || '#888';
+  const bgColor = cs.getPropertyValue('--bg').trim();
+
+  if (sessions.length < 2) {
+    ctx.fillStyle = textFaint;
+    ctx.font = '12px ui-monospace, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Not enough data yet', rect.width / 2, 90);
+    return;
+  }
+
+  const padding = { top: 16, right: 16, bottom: 24, left: 36 };
+  const w = rect.width - padding.left - padding.right;
+  const h = 180 - padding.top - padding.bottom;
+  const times = sessions.map(s => s.time);
+  const min = Math.min(...times);
+  const max = Math.max(...times);
+  const range = max - min || 1;
+
+  ctx.strokeStyle = borderColor;
+  ctx.lineWidth = 1;
+  for (let i = 0; i <= 3; i++) {
+    const y = padding.top + (h / 3) * i;
+    ctx.beginPath();
+    ctx.moveTo(padding.left, y);
+    ctx.lineTo(padding.left + w, y);
+    ctx.stroke();
+    ctx.fillStyle = textFaint;
+    ctx.font = '10px ui-monospace, monospace';
+    ctx.textAlign = 'right';
+    ctx.fillText((max - (range / 3) * i).toFixed(1) + 's', padding.left - 6, y + 3);
+  }
+
+  ctx.strokeStyle = accentColor;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  sessions.forEach((s, i) => {
+    const x = padding.left + (w / (sessions.length - 1)) * i;
+    const y = padding.top + h - ((s.time - min) / range) * h;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  sessions.forEach((s, i) => {
+    const x = padding.left + (w / (sessions.length - 1)) * i;
+    const y = padding.top + h - ((s.time - min) / range) * h;
+    ctx.fillStyle = bgColor;
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = accentColor;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+}
+
+function renderTierBreakdown(sessions) {
+  const container = document.getElementById('tierBreakdown');
+  if(!container) return;
+  const counts = { elite: 0, excellent: 0, average: 0, beginner: 0 };
+  sessions.forEach(s => { if (s.tier && counts[s.tier] !== undefined) counts[s.tier]++; });
+  const total = sessions.length || 1;
+  const colors = { elite: 'var(--tier-elite)', excellent: 'var(--tier-excellent)', average: 'var(--tier-average)', beginner: 'var(--tier-beginner)' };
+  let html = '';
+  ['elite', 'excellent', 'average', 'beginner'].forEach(tier => {
+    const pct = (counts[tier] / total) * 100;
+    html += `
+      <div style="margin-bottom:14px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+          <span style="display:flex;align-items:center;gap:8px"><span class="tier-dot" style="background:${colors[tier]}"></span>${TIER_LABELS[tier]}</span>
+          <span style="color:var(--text-dim)">${counts[tier]} (${pct.toFixed(0)}%)</span>
+        </div>
+        <div style="height:4px;background:var(--bg-cell);border-radius:2px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${colors[tier]};border-radius:2px"></div>
+        </div>
+      </div>
+    `;
+  });
+  container.innerHTML = html || '<div class="empty-state">No data yet</div>';
+}
+
+function renderSessionList(sessions) {
+  const list = document.getElementById('sessionList');
+  if (!list) return;
+  if (sessions.length === 0) {
+    list.innerHTML = '<li><div class="empty-state" style="grid-column:1/-1">No sessions yet. Play a game.</div></li>';
+    return;
+  }
+  const colors = { elite: 'var(--tier-elite)', excellent: 'var(--tier-excellent)', average: 'var(--tier-average)', beginner: 'var(--tier-beginner)' };
+  const modeLabels = { classic: 'Classic', reverse: 'Reverse', alphanumeric: 'Alpha', timed: 'Timed' };
+  
+  list.innerHTML = sessions.map((s, i) => {
+    const date = new Date(s.ts);
+    const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    let timeText = (s.mode === 'timed' && !s.fullClear) ? `${s.numbersReached}/${s.totalNumbers}` : s.time.toFixed(2) + 's';
+    
+    let diffMarker = '';
+    if (s.diffMultiplier > 3) diffMarker = ' <span style="color:var(--tier-elite)" title="Hard/Scattered Board">▲</span>';
+    else if (s.diffMultiplier < 3) diffMarker = ' <span style="color:var(--tier-beginner)" title="Easy/Clustered Board">▼</span>';
+
+    const recordBadge = s.isRecord ? '<span style="color:var(--gold);margin-left:6px">★</span>' : '';
+    
+    return `
+      <li class="session-row" data-ts="${s.ts}">
+        <span class="session-num">#${i + 1}</span>
+        <span>
+          <span class="tier-dot" style="background:${colors[s.tier] || 'var(--text-faint)'}"></span>
+          ${modeLabels[s.mode] || s.mode} · ${s.size}x${s.size}${diffMarker}${recordBadge}
+          <div class="session-meta">${dateStr}${s.errors ? ' · ' + s.errors + ' err' : ''}</div>
+        </span>
+        <span class="session-time">${timeText}</span>
+        <span style="color:var(--accent);font-size:12px">+${s.exp}</span>
+      </li>
+    `;
+  }).join('');
+
+  list.querySelectorAll('.session-row').forEach(row => {
+    row.addEventListener('click', () => openSessionModalByTs(parseInt(row.dataset.ts)));
+  });
+}
+
+/* ============================ EVENTS ============================ */
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById('view-' + tab.dataset.tab).classList.add('active');
+    
+    if (tab.dataset.tab === 'analytics') setTimeout(renderAnalytics, 10);
+    if (tab.dataset.tab === 'character') updateLevelDisplay();
+    if (tab.dataset.tab === 'rewards') renderRewardsTab();
+  });
+});
+
+function setTheme(theme) {
+  state.theme = theme;
+  document.body.dataset.theme = theme;
+  document.querySelectorAll('.theme-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.theme === theme);
+  });
+  
+  saveState();
+  updateLevelDisplay();
+  if (document.getElementById('view-analytics').classList.contains('active')) setTimeout(renderAnalytics, 10);
+}
+
+document.querySelectorAll('.theme-btn').forEach(b => {
+  if(!b.id || !b.id.includes('orb')) b.addEventListener('click', () => setTheme(b.dataset.theme));
+});
+
+els.newGameBtn.addEventListener('click', () => { els.resultCard.classList.remove('visible'); buildBoard(true); });
+els.restartBtn.addEventListener('click', () => { els.resultCard.classList.remove('visible'); buildBoard(false); });
+els.focusRestartBtn.addEventListener('click', () => { els.resultCard.classList.remove('visible'); buildBoard(false); });
+els.focusNewBtn.addEventListener('click', () => { els.resultCard.classList.remove('visible'); buildBoard(true); });
+
+els.modeSelect.addEventListener('change', () => {
+  els.timedLimitGroup.style.display = els.modeSelect.value === 'timed' ? 'flex' : 'none';
+  buildBoard(true);
+});
+els.sizeSelect.addEventListener('change', () => buildBoard(true));
+els.timeLimitSelect.addEventListener('change', () => buildBoard(true));
+
+document.getElementById('analyticsMode').addEventListener('change', renderAnalytics);
+document.getElementById('analyticsSize').addEventListener('change', renderAnalytics);
+
+document.getElementById('clearBtn').addEventListener('click', () => {
+  if (confirm('This will wipe ALL session history, reset XP to 0, lock all unlocked items, and clear any custom colours. This cannot be undone. Continue?')) {
+    state.history = []; state.totalExp = 0; state.itemColours = {};
+    state.equipped = { headwear: null, face: null, clothing: null, aura: null, effect: null };
+    state.unseenUnlocks = []; state.unseenToys = [];
+    saveState(); updateLevelDisplay(); renderAnalytics(); updateBestDisplay();
+  }
+});
+
+function toggleGender() {
+  state.gender = state.gender === 'M' ? 'F' : 'M';
+  saveState(); updateLevelDisplay();
+}
+els.genderToggleLarge.addEventListener('click', toggleGender);
+els.characterFrame.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelector('.tab[data-tab="character"]').classList.add('active');
+    document.getElementById('view-character').classList.add('active');
+    updateLevelDisplay();
+});
+
+els.visionCheat.addEventListener('click', (e) => {
+  e.stopPropagation();
+  const currentParams = levelFromExp(state.totalExp);
+  if (currentParams.level < MAX_LEVEL) {
+      state.totalExp += currentParams.neededForNext - currentParams.currentInLevel;
+      saveState(); updateLevelDisplay();
+      
+      const newLevel = currentParams.level + 1;
+      const newUnlocks = UNLOCKS.filter(u => u.level === newLevel);
+      if (newUnlocks.length > 0) showLevelupToast(`Level ${newLevel} reached`, `Unlocked: ${newUnlocks[newUnlocks.length - 1].name}`);
+      else showLevelupToast(`Level ${newLevel} reached`, getTierName(newLevel));
+  }
+});
+
+els.focusBtn.addEventListener('click', () => toggleFocusMode(true));
+els.focusExitBtn.addEventListener('click', () => toggleFocusMode(false));
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && state.focus && !els.sessionModal.classList.contains('visible') && !els.legitModal.classList.contains('visible')) {
+    toggleFocusMode(false);
+  }
+});
+
+(function init() {
+  loadState(); setTheme(state.theme); updateLevelDisplay(); buildBoard(true);
+})();
+</script>
+</body>
+</html>
