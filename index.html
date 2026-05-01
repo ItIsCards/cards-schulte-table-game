@@ -187,6 +187,8 @@
   @media (max-width: 1250px) { .toy-btn .toy-tooltip { right: 50%; top: -120%; transform: translateX(50%); } }
   .toy-btn:hover .toy-tooltip { opacity: 1; }
 
+  #focusTransformContainer { display: flex; flex-direction: column; align-items: center; width: 100%; transition: transform 0.1s ease-out; transform-origin: center center; }
+
   .board-wrap { display: flex; justify-content: center; margin-bottom: 24px; width: 100%; position: relative; }
   #board { display: grid; gap: 6px; padding: 6px; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 8px; width: 100%; margin: 0 auto; }
   .cell { display: flex; justify-content: center; align-items: center; background: var(--bg-cell); color: var(--text); font-size: clamp(18px, 4vw, 24px); font-weight: 600; cursor: pointer; user-select: none; border-radius: 4px; transition: background 0.08s, transform 0.06s, color 0.08s, box-shadow 0.1s; border: 1px solid transparent; aspect-ratio: 1; }
@@ -359,8 +361,14 @@
   body.focus .view.active { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; height: 100%; }
 
   .focus-actions-row { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 0 auto 18px; }
-  .focus-icon-btn { background: none; border: none; color: var(--text-faint); font-size: 28px; cursor: pointer; transition: color 0.2s, transform 0.2s; padding: 0 10px; display: flex; align-items: center; justify-content: center; }
+  .focus-icon-btn { background: none; border: none; color: var(--text-faint); font-size: 28px; cursor: pointer; transition: color 0.2s, transform 0.2s, background 0.2s; padding: 4px 10px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
   .focus-icon-btn:hover { color: var(--accent); transform: scale(1.15); }
+  .focus-icon-btn.active-toggle { background: var(--accent); color: var(--accent-text); transform: scale(1); }
+  
+  /* Focus Drag Mechanics */
+  body.focus-drag-mode #focusTransformContainer { cursor: move; }
+  body.focus-drag-mode .board-wrap { cursor: default; }
+  body.focus-drag-mode .cell { pointer-events: none; }
   
   /* Hide standard buttons in focus, show only focus buttons */
   .focus-only-btn { display: none; }
@@ -548,19 +556,41 @@
 
     <div class="play-container">
       <div class="play-stage">
-        <div class="focus-actions-row focus-only-btn">
-          <button id="focusRestartBtn" class="focus-icon-btn" title="Restart same numbers">&#x21BA;</button>
-          <div class="next-indicator" id="nextIndicator">
-            <span class="ni-label">Next</span>
-            <span class="ni-value" id="nextIndicatorValue">1</span>
-          </div>
-          <button id="focusNewBtn" class="focus-icon-btn" title="Shuffle and start new">&#x271A;</button>
-          <button id="focusExitBtn" class="focus-icon-btn" title="Exit Focus (ESC)">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-          </button>
-        </div>
-        <div class="board-wrap" id="boardWrap">
-          <div id="board"></div>
+        
+        <!-- WRAPPED ACTION BAR & BOARD TOGETHER FOR UNIFIED SCALING -->
+        <div id="focusTransformContainer">
+            <div class="focus-actions-row focus-only-btn">
+              <button id="focusZoomOutBtn" class="focus-icon-btn" title="Zoom Out Board">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+              </button>
+              <button id="focusZoomInBtn" class="focus-icon-btn" title="Zoom In Board">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line><line x1="11" y1="8" x2="11" y2="14"></line><line x1="8" y1="11" x2="14" y2="11"></line></svg>
+              </button>
+              <button id="focusDragBtn" class="focus-icon-btn" title="Toggle Move Mode (Drag Board)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"></polyline><polyline points="9 5 12 2 15 5"></polyline><polyline points="19 9 22 12 19 15"></polyline><polyline points="9 19 12 22 15 19"></polyline><line x1="2" y1="12" x2="22" y2="12"></line><line x1="12" y1="2" x2="12" y2="22"></line></svg>
+              </button>
+              <button id="focusResetPosBtn" class="focus-icon-btn" title="Reset Layout" style="display:none; color: var(--gold);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+              </button>
+
+              <span style="width: 1px; height: 24px; background: var(--border); margin: 0 8px;"></span>
+
+              <button id="focusRestartBtn" class="focus-icon-btn" title="Restart same numbers">&#x21BA;</button>
+              <div class="next-indicator" id="nextIndicator">
+                <span class="ni-label">Next</span>
+                <span class="ni-value" id="nextIndicatorValue">1</span>
+              </div>
+              <button id="focusNewBtn" class="focus-icon-btn" title="Shuffle and start new">&#x271A;</button>
+
+              <span style="width: 1px; height: 24px; background: var(--border); margin: 0 8px;"></span>
+
+              <button id="focusExitBtn" class="focus-icon-btn" title="Exit Focus (ESC)">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+              </button>
+            </div>
+            <div class="board-wrap" id="boardWrap">
+              <div id="board"></div>
+            </div>
         </div>
       </div>
       
@@ -876,6 +906,7 @@ const UNLOCKS = [
 ];
 
 const TOYS = [
+    { level: 1, id: 'toy-smoke', icon: '💨', name: 'Smoke & Bubbles', desc: 'Release bouncing bubbles and rolling smoke', action: spawnSmokeAndBubbles },
     { level: 3, id: 'toy-aero', icon: '🫧', name: 'Aero Theme', desc: 'Toggle the aquatic glassmorphism theme', action: toggleAeroTheme },
     { level: 5, id: 'toy-orb', icon: '🔮', name: 'Focus Orb', desc: 'Launch a bouncing orb around the screen', action: spawnBouncingOrb },
     { level: 10, id: 'toy-dance', icon: '🕺', name: 'Dance Break', desc: 'Make your character dance', action: toggleCharacterDance },
@@ -1277,7 +1308,10 @@ const els = {
   legitYesBtn: document.getElementById('legitYesBtn'), legitNoBtn: document.getElementById('legitNoBtn'),
   reportModal: document.getElementById('reportModal'), reportOutput: document.getElementById('reportOutput'),
   generateReportBtn: document.getElementById('generateReportBtn'), reportModalClose: document.getElementById('reportModalClose'),
-  zoomInBtn: document.getElementById('zoomInBtn'), zoomOutBtn: document.getElementById('zoomOutBtn'), zoomLabel: document.getElementById('zoomLabel')
+  zoomInBtn: document.getElementById('zoomInBtn'), zoomOutBtn: document.getElementById('zoomOutBtn'), zoomLabel: document.getElementById('zoomLabel'),
+  focusZoomInBtn: document.getElementById('focusZoomInBtn'), focusZoomOutBtn: document.getElementById('focusZoomOutBtn'),
+  focusDragBtn: document.getElementById('focusDragBtn'), focusResetPosBtn: document.getElementById('focusResetPosBtn'),
+  focusTransformContainer: document.getElementById('focusTransformContainer')
 };
 
 /* ============================ ZOOM / SCALE CONTROLS ============================ */
@@ -1296,6 +1330,70 @@ els.zoomOutBtn.addEventListener('click', () => updateZoom(state.zoom - 0.1));
 function toggleAeroTheme() {
     if (state.theme === 'aero') setTheme('dark');
     else setTheme('aero');
+}
+
+function spawnSmokeAndBubbles() {
+    for(let i=0; i<8; i++) {
+        const smoke = document.createElement('div');
+        smoke.style.position = 'fixed';
+        smoke.style.bottom = '-100px';
+        smoke.style.left = (Math.random() * 100) + 'vw';
+        smoke.style.width = (Math.random() * 200 + 150) + 'px';
+        smoke.style.height = smoke.style.width;
+        smoke.style.background = 'rgba(200, 200, 200, 0.08)';
+        smoke.style.borderRadius = '50%';
+        smoke.style.filter = 'blur(40px)';
+        smoke.style.pointerEvents = 'none';
+        smoke.style.zIndex = '9998';
+        document.body.appendChild(smoke);
+
+        const duration = Math.random() * 5000 + 5000;
+        smoke.animate([
+            { transform: 'translateY(0) scale(1)', opacity: 0 },
+            { opacity: 1, offset: 0.2 },
+            { opacity: 0, offset: 0.8 },
+            { transform: `translateY(-100vh) translateX(${Math.random() * 200 - 100}px) scale(2.5)`, opacity: 0 }
+        ], { duration: duration, easing: 'ease-out' });
+
+        setTimeout(() => smoke.remove(), duration);
+    }
+
+    for(let i=0; i<15; i++) {
+        const bubble = document.createElement('div');
+        const size = Math.random() * 30 + 10;
+        bubble.style.position = 'fixed';
+        bubble.style.width = size + 'px';
+        bubble.style.height = size + 'px';
+        bubble.style.borderRadius = '50%';
+        bubble.style.border = '1px solid rgba(255, 255, 255, 0.4)';
+        bubble.style.background = 'radial-gradient(circle at 30% 30%, rgba(255,255,255,0.8), rgba(255,255,255,0.1))';
+        bubble.style.boxShadow = '0 4px 8px rgba(0,0,0,0.1)';
+        bubble.style.pointerEvents = 'none';
+        bubble.style.zIndex = '9999';
+        bubble.style.left = (Math.random() * window.innerWidth) + 'px';
+        bubble.style.top = (Math.random() * window.innerHeight) + 'px';
+        document.body.appendChild(bubble);
+
+        let vx = (Math.random() - 0.5) * 8;
+        let vy = (Math.random() - 0.5) * 8;
+        let x = parseFloat(bubble.style.left);
+        let y = parseFloat(bubble.style.top);
+
+        const anim = setInterval(() => {
+            x += vx; y += vy;
+            if (x < 0 || x > window.innerWidth - size) vx *= -1;
+            if (y < 0 || y > window.innerHeight - size) vy *= -1;
+            bubble.style.left = x + 'px';
+            bubble.style.top = y + 'px';
+        }, 30);
+
+        setTimeout(() => {
+            clearInterval(anim);
+            bubble.style.transition = 'opacity 0.5s';
+            bubble.style.opacity = '0';
+            setTimeout(() => bubble.remove(), 500);
+        }, 6000);
+    }
 }
 
 function renderToybox(level) {
@@ -1912,6 +2010,15 @@ function toggleFocusMode(force) {
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.querySelector('.tab[data-tab="play"]').classList.add('active');
     document.getElementById('view-play').classList.add('active');
+  } else {
+    // Reset drag and scale when exiting
+    fX = 0; fY = 0; fScale = 1;
+    updateFocusTransform();
+    if(focusDragMode) {
+        focusDragMode = false;
+        els.focusDragBtn.classList.remove('active-toggle');
+        document.body.classList.remove('focus-drag-mode');
+    }
   }
 }
 
@@ -2630,6 +2737,82 @@ els.visionCheat.addEventListener('click', (e) => {
       else showLevelupToast(`Level ${newLevel} reached`, getTierName(newLevel));
   }
 });
+
+/* --- Focus Drag & Scale Logic --- */
+let fX = 0, fY = 0, fScale = 1;
+let isFDragging = false, dragStartX = 0, dragStartY = 0;
+let focusDragMode = false;
+
+function updateFocusTransform() {
+    els.focusTransformContainer.style.transform = `translate(${fX}px, ${fY}px) scale(${fScale})`;
+    if (fX !== 0 || fY !== 0 || fScale !== 1) {
+        els.focusResetPosBtn.style.display = 'flex';
+    } else {
+        els.focusResetPosBtn.style.display = 'none';
+    }
+}
+
+els.focusZoomInBtn.addEventListener('click', () => { fScale = Math.min(fScale + 0.15, 3.5); updateFocusTransform(); });
+els.focusZoomOutBtn.addEventListener('click', () => { fScale = Math.max(fScale - 0.15, 0.4); updateFocusTransform(); });
+
+els.focusResetPosBtn.addEventListener('click', () => {
+    fX = 0; fY = 0; fScale = 1;
+    updateFocusTransform();
+    if(focusDragMode) {
+        focusDragMode = false;
+        els.focusDragBtn.classList.remove('active-toggle');
+        document.body.classList.remove('focus-drag-mode');
+    }
+});
+
+els.focusDragBtn.addEventListener('click', () => {
+    focusDragMode = !focusDragMode;
+    els.focusDragBtn.classList.toggle('active-toggle', focusDragMode);
+    document.body.classList.toggle('focus-drag-mode', focusDragMode);
+});
+
+els.boardWrap.addEventListener('mousedown', (e) => {
+    if (!focusDragMode || !state.focus) return;
+    isFDragging = true;
+    els.focusTransformContainer.style.transition = 'none';
+    dragStartX = e.clientX - fX;
+    dragStartY = e.clientY - fY;
+});
+
+window.addEventListener('mousemove', (e) => {
+    if (!isFDragging) return;
+    fX = e.clientX - dragStartX;
+    fY = e.clientY - dragStartY;
+    els.focusTransformContainer.style.transform = `translate(${fX}px, ${fY}px) scale(${fScale})`;
+});
+
+window.addEventListener('mouseup', () => {
+    if (isFDragging) {
+        isFDragging = false;
+        els.focusTransformContainer.style.transition = 'transform 0.1s ease-out';
+    }
+});
+
+function toggleFocusMode(force) {
+  state.focus = (force !== undefined) ? force : !state.focus;
+  document.body.classList.toggle('focus', state.focus);
+  
+  if (state.focus) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.querySelector('.tab[data-tab="play"]').classList.add('active');
+    document.getElementById('view-play').classList.add('active');
+  } else {
+    // Reset drag and scale when exiting
+    fX = 0; fY = 0; fScale = 1;
+    updateFocusTransform();
+    if(focusDragMode) {
+        focusDragMode = false;
+        els.focusDragBtn.classList.remove('active-toggle');
+        document.body.classList.remove('focus-drag-mode');
+    }
+  }
+}
 
 els.focusBtn.addEventListener('click', () => toggleFocusMode(true));
 els.focusExitBtn.addEventListener('click', () => toggleFocusMode(false));
